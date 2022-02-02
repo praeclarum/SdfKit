@@ -70,7 +70,7 @@ public class Cell
     /// <summary>
     /// Values of cube corners (isovalue subtracted)
     /// </summary>
-    double v0, v1, v2, v3, v4, v5, v6, v7;
+    public double v0, v1, v2, v3, v4, v5, v6, v7;
 
     readonly double[] vv = new double[8];
     readonly double[] vg = new double[8 * 3];
@@ -207,7 +207,7 @@ public class Cell
     /// <summary>
     /// The vertices for the triangles are specified in the given Lut at the specified index. There are nt triangles.
     /// </summary>
-    void AddTriangles(Lut lut, int lutIndex, int nt)
+    public void AddTriangles(Lut lut, int lutIndex, int nt)
     {
         PrepareForAddingTriangles();
         for (int i = 0; i < nt; i++)
@@ -223,7 +223,7 @@ public class Cell
     /// <summary>
     /// Same as AddTriangles, except that now the geometry is in a LUT with 3 dimensions, and an extra index is provided.
     /// </summary>
-    void AddTriangles2(Lut lut, int lutIndex, int lutIndex2, int nt)
+    public void AddTriangles2(Lut lut, int lutIndex, int lutIndex2, int nt)
     {
         PrepareForAddingTriangles();
         for (int i = 0; i < nt; i++)
