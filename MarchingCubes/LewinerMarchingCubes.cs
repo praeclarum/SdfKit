@@ -117,7 +117,7 @@ public class LewinerMarchingCubes : IVolumeMesher
                 if (TestInternal(cell, luts, cas, config, subconfig, luts.TEST6.Get2(config,1))) {
                     cell.AddTriangles(luts.TILING6_1_1, config, 3);
                 } else {
-                    //cell.calculate_center_vertex() // v12 needed
+                    //cell.CalculateCenterVertex() // v12 needed
                     cell.AddTriangles(luts.TILING6_1_2, config, 9);
                 }
             }
@@ -132,14 +132,14 @@ public class LewinerMarchingCubes : IVolumeMesher
             } else if (subconfig == 1) { cell.AddTriangles2(luts.TILING7_2, config, 0, 5);
             } else if (subconfig == 2) { cell.AddTriangles2(luts.TILING7_2, config, 1, 5);
             } else if (subconfig == 3) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING7_3, config, 0, 9);
             } else if (subconfig == 4) { cell.AddTriangles2(luts.TILING7_2, config, 2, 5);
             } else if (subconfig == 5) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING7_3, config, 1, 9);
             } else if (subconfig == 6) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING7_3, config, 2, 9);
             } else if (subconfig == 7) {
                 if (TestInternal(cell, luts, cas, config, subconfig, luts.TEST7.Get2(config,3))) {
@@ -160,12 +160,12 @@ public class LewinerMarchingCubes : IVolumeMesher
                 if (TestFace(cell, luts.TEST10.Get2(config,1))) {
                     cell.AddTriangles(luts.TILING10_1_1_, config, 4);
                 } else {
-                    //cell.calculate_center_vertex() // v12 needed
+                    //cell.CalculateCenterVertex() // v12 needed
                     cell.AddTriangles(luts.TILING10_2, config, 8);
                 }
             } else {
                 if (TestFace(cell, luts.TEST10.Get2(config,1))) {
-                    //cell.calculate_center_vertex() // v12 needed
+                    //cell.CalculateCenterVertex() // v12 needed
                     cell.AddTriangles(luts.TILING10_2_, config, 8);
                 } else {
                     if (TestInternal(cell, luts, cas, config, subconfig, luts.TEST10.Get2(config,2))) {
@@ -184,12 +184,12 @@ public class LewinerMarchingCubes : IVolumeMesher
                 if (TestFace(cell, luts.TEST12.Get2(config,1))) {
                     cell.AddTriangles(luts.TILING12_1_1_, config, 4);
                 } else {
-                    //cell.calculate_center_vertex() // v12 needed
+                    //cell.CalculateCenterVertex() // v12 needed
                     cell.AddTriangles(luts.TILING12_2, config, 8);
                 }
             } else {
                 if (TestFace(cell, luts.TEST12.Get2(config,1))) {
-                    //cell.calculate_center_vertex() // v12 needed
+                    //cell.CalculateCenterVertex() // v12 needed
                     cell.AddTriangles(luts.TILING12_2_, config, 8);
                 } else {
                     if (TestInternal(cell, luts, cas, config, subconfig, luts.TEST12.Get2(config,2))) {
@@ -222,53 +222,53 @@ public class LewinerMarchingCubes : IVolumeMesher
             } else if (subconfig==6) {  cell.AddTriangles2(luts.TILING13_2, config, 5, 6);
             //
             } else if (subconfig==7) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 0, 10);
             } else if (subconfig==8) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 1, 10);
             } else if (subconfig==9) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 2, 10);
             } else if (subconfig==10) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 3, 10);
             } else if (subconfig==11) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 4, 10);
             } else if (subconfig==12) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 5, 10);
             } else if (subconfig==13) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 6, 10);
             } else if (subconfig==14) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 7, 10);
             } else if (subconfig==15) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 8, 10);
             } else if (subconfig==16) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 9, 10);
             } else if (subconfig==17) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 10, 10);
             } else if (subconfig==18) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3, config, 11, 10);
             //
             } else if (subconfig==19) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_4, config, 0, 12);
             } else if (subconfig==20) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_4, config, 1, 12);
             } else if (subconfig==21) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_4, config, 2, 12);
             } else if (subconfig==22) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_4, config, 3, 12);
             //
             } else if (subconfig==23) {
@@ -301,40 +301,40 @@ public class LewinerMarchingCubes : IVolumeMesher
                 }
             //
             } else if (subconfig==27) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 0, 10);
             } else if (subconfig==28) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 1, 10);
             } else if (subconfig==29) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 2, 10);
             } else if (subconfig==30) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 3, 10);
             } else if (subconfig==31) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 4, 10);
             } else if (subconfig==32) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 5, 10);
             } else if (subconfig==33) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config,6, 10);
             } else if (subconfig==34) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 7, 10);
             } else if (subconfig==35) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 8, 10);
             } else if (subconfig==36) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 9, 10);
             } else if (subconfig==37) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 10, 10);
             } else if (subconfig==38) {
-                //cell.calculate_center_vertex() // v12 needed
+                //cell.CalculateCenterVertex() // v12 needed
                 cell.AddTriangles2(luts.TILING13_3_, config, 11, 10);
             //
             } else if (subconfig==39) {
