@@ -45,4 +45,5 @@ public class LutProvider {
     public Lut EDGESRELX;
     public Lut EDGESRELY;
     public Lut EDGESRELZ;
+    public Lut CASES;
 }

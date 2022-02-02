@@ -58,7 +58,7 @@ namespace MarchingCubes;
 /// the 8 corners of the current cube, but because the final value of a normal
 /// was contributed from multiple cells, the normals are quite accurate.
 /// </summary>
-public class LewinerCell
+public class Cell
 {
     const double FLT_EPSILON = 0.0000001;
 
@@ -105,10 +105,11 @@ public class LewinerCell
     int[] faceLayer2;
 
     int index;
+    public int Index => index;
 
     readonly LutProvider luts;
 
-    public LewinerCell(LutProvider luts, int nx, int ny, int nz)
+    public Cell(LutProvider luts, int nx, int ny, int nz)
     {
         this.luts = luts;
         this.nx = nx;
@@ -169,9 +170,9 @@ public class LewinerCell
     /// This method also calculated the magic 256 word to identify the
     /// cases (i.e. cell.index).
     /// </summary>
-    void SetCube(double isovalue,
-                 int x, int y, int z, int step,
-                 double v0, double v1, double v2, double v3, double v4, double v5, double v6, double v7)
+    public void SetCube(double isovalue,
+                        int x, int y, int z, int step,
+                        double v0, double v1, double v2, double v3, double v4, double v5, double v6, double v7)
     {
         this.x = x;
         this.y = y;

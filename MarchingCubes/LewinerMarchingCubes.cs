@@ -38,13 +38,13 @@ public class LewinerMarchingCubes : IVolumeMesher
         this.luts = luts;
     }
 
-    public Mesh CreateMesh(float[,,] volume, float isolevel, int st)
+    public Mesh CreateMesh(float[,,] im, float isovalue, int st)
     {
-        int nx = volume.GetLength(0);
-        int ny = volume.GetLength(1);
-        int nz = volume.GetLength(2);
+        int nx = im.GetLength(0);
+        int ny = im.GetLength(1);
+        int nz = im.GetLength(2);
 
-        var cell = new LewinerCell(luts, nx, ny, nz);
+        var cell = new Cell(luts, nx, ny, nz);
 
         var nx_bound = nx - 2*st;
         var ny_bound = ny - 2*st;
@@ -64,11 +64,25 @@ public class LewinerMarchingCubes : IVolumeMesher
                 int x = -st;
                 while (x < nx_bound)
                 {
-                    throw new NotImplementedException ();
+                    x += st;
+                    var x_st = x + st;
+                    cell.SetCube(isovalue, x, y, z, st,
+                        im[z   ,y, x], im[z   ,y, x_st], im[z   ,y_st, x_st], im[z   ,y_st, x],
+                        im[z_st,y, x], im[z_st,y, x_st], im[z_st,y_st, x_st], im[z_st,y_st, x]);
+                    var cas = luts.CASES.Get2(cell.Index, 0);
+                    if (cas > 0) {
+                        var config = luts.CASES.Get2(cell.Index, 1);
+                        TheBigSwitch(cell, cas, config);
+                    }
                 }
             }
         }
 
         return new Mesh (cell.Vertices, cell.Normals, cell.Faces);
+    }
+
+    void TheBigSwitch(Cell cell, int cas, int config)
+    {
+        throw new NotImplementedException();
     }
 }
