@@ -44,7 +44,7 @@ public class LewinerMarchingCubes : IVolumeMesher
         int ny = volume.GetLength(1);
         int nz = volume.GetLength(2);
 
-        var cell = new Cell(luts, nx, ny, nz);
+        var cell = new LewinerCell(luts, nx, ny, nz);
 
         var nx_bound = nx - 2*st;
         var ny_bound = ny - 2*st;

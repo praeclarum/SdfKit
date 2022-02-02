@@ -58,7 +58,7 @@ namespace MarchingCubes;
 /// the 8 corners of the current cube, but because the final value of a normal
 /// was contributed from multiple cells, the normals are quite accurate.
 /// </summary>
-public class Cell
+public class LewinerCell
 {
     const double FLT_EPSILON = 0.0000001;
 
@@ -108,7 +108,7 @@ public class Cell
 
     readonly LutProvider luts;
 
-    public Cell(LutProvider luts, int nx, int ny, int nz)
+    public LewinerCell(LutProvider luts, int nx, int ny, int nz)
     {
         this.luts = luts;
         this.nx = nx;
@@ -493,7 +493,7 @@ public class Cell
                        v4 * this.vg[4 * 3 + 0] + v5 * this.vg[5 * 3 + 0] + v6 * this.vg[6 * 3 + 0] + v7 * this.vg[7 * 3 + 0]);
         this.v12_yg = (v0 * this.vg[0 * 3 + 1] + v1 * this.vg[1 * 3 + 1] + v2 * this.vg[2 * 3 + 1] + v3 * this.vg[3 * 3 + 1] +
                        v4 * this.vg[4 * 3 + 1] + v5 * this.vg[5 * 3 + 1] + v6 * this.vg[6 * 3 + 1] + v7 * this.vg[7 * 3 + 1]);
-        this.v12_xg = (v0 * this.vg[0 * 3 + 2] + v1 * this.vg[1 * 3 + 2] + v2 * this.vg[2 * 3 + 2] + v3 * this.vg[3 * 3 + 2] +
+        this.v12_zg = (v0 * this.vg[0 * 3 + 2] + v1 * this.vg[1 * 3 + 2] + v2 * this.vg[2 * 3 + 2] + v3 * this.vg[3 * 3 + 2] +
                        v4 * this.vg[4 * 3 + 2] + v5 * this.vg[5 * 3 + 2] + v6 * this.vg[6 * 3 + 2] + v7 * this.vg[7 * 3 + 2]);
 
         // Set flag that this stuff is calculated
