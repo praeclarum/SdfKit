@@ -51,9 +51,9 @@ public class Lut3 {
 }
 
 public class LutProvider {
-    public Lut2 EDGESRELX;// = new Lut2(Luts.edgesrelx);
-    public Lut2 EDGESRELY;// = new Lut2(Luts.edgesrely);
-    public Lut2 EDGESRELZ;// = new Lut2(Luts.edgesrelz);
+    public Lut2 EDGESRELX = new Lut2(Luts.edgesrelx);
+    public Lut2 EDGESRELY = new Lut2(Luts.edgesrely);
+    public Lut2 EDGESRELZ = new Lut2(Luts.edgesrelz);
 
     public Lut2 CASESCLASSIC = new Lut2(Luts.casesClassic);
     public Lut2 CASES = new Lut2(Luts.cases);
@@ -109,6 +109,21 @@ public class LutProvider {
 }
 
 public static class Luts {
+/*
+# Map an edge-index to two relative pixel positions. The ege index
+# represents a point that lies somewhere in between these pixels.
+# Linear interpolation should be used to determine where it is exactly.
+#   0
+# 3   1   ->  0x
+#   2         xx
+EDGETORELATIVEPOSX = np.array([ [0,1],[1,1],[1,0],[0,0], [0,1],[1,1],[1,0],[0,0], [0,0],[1,1],[1,1],[0,0] ], 'int8')
+EDGETORELATIVEPOSY = np.array([ [0,0],[0,1],[1,1],[1,0], [0,0],[0,1],[1,1],[1,0], [0,0],[0,0],[1,1],[1,1] ], 'int8')
+EDGETORELATIVEPOSZ = np.array([ [0,0],[0,0],[0,0],[0,0], [1,1],[1,1],[1,1],[1,1], [0,1],[0,1],[0,1],[0,1] ], 'int8')
+*/
+    public static sbyte[,] edgesrelx = { {0,1},{1,1},{1,0},{0,0}, {0,1},{1,1},{1,0},{0,0}, {0,0},{1,1},{1,1},{0,0} };
+    public static sbyte[,] edgesrely = { {0,0},{0,1},{1,1},{1,0}, {0,0},{0,1},{1,1},{1,0}, {0,0},{0,0},{1,1},{1,1} };
+    public static sbyte[,] edgesrelz = { {0,0},{0,0},{0,0},{0,0}, {1,1},{1,1},{1,1},{1,1}, {0,1},{0,1},{0,1},{0,1} };
+
 //_____________________________________________________________________________
 /**
  * \brief case mapping
