@@ -38,11 +38,11 @@ public class LewinerMarchingCubes : IVolumeMesher
         this.luts = luts;
     }
 
-    public Mesh CreateMesh(float[,,] im, float isovalue, int st)
+    public Mesh CreateMesh(float[,,] volume, float isovalue, int st)
     {
-        int nx = im.GetLength(0);
-        int ny = im.GetLength(1);
-        int nz = im.GetLength(2);
+        int nx = volume.GetLength(0);
+        int ny = volume.GetLength(1);
+        int nz = volume.GetLength(2);
 
         var cell = new Cell(luts, nx, ny, nz);
 
@@ -67,8 +67,8 @@ public class LewinerMarchingCubes : IVolumeMesher
                     x += st;
                     var x_st = x + st;
                     cell.SetCube(isovalue, x, y, z, st,
-                        im[z   ,y, x], im[z   ,y, x_st], im[z   ,y_st, x_st], im[z   ,y_st, x],
-                        im[z_st,y, x], im[z_st,y, x_st], im[z_st,y_st, x_st], im[z_st,y_st, x]);
+                        volume[x, y, z   ], volume[x_st, y, z   ], volume[x_st, y_st, z   ], volume[x, y_st, z   ],
+                        volume[x, y, z_st], volume[x_st, y, z_st], volume[x_st, y_st, z_st], volume[x, y_st, z_st]);
                     var cas = luts.CASES.Get2(cell.Index, 0);
                     if (cas > 0) {
                         var config = luts.CASES.Get2(cell.Index, 1);
