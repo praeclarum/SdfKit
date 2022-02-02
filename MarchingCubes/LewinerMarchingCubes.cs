@@ -29,20 +29,46 @@
 
 namespace MarchingCubes;
 
-public class Lut {
-    public readonly int L0;
-    public readonly int L1;
-    public readonly int L2;
+public class LewinerMarchingCubes : IVolumeMesher
+{
+    readonly LutProvider luts;
 
-    sbyte[] values;
+    public LewinerMarchingCubes(LutProvider luts)
+    {
+        this.luts = luts;
+    }
 
-    public int Get1(int i0) => values[i0];
-    public int Get2(int i0, int i1) => values[i0*L1 + i1];
-    public int Get3(int i0, int i1, int i2) => values[i0*L1*L2 + i1*L2 + i2];
-}
+    public Mesh CreateMesh(float[,,] volume, float isolevel, int st)
+    {
+        int nx = volume.GetLength(0);
+        int ny = volume.GetLength(1);
+        int nz = volume.GetLength(2);
 
-public class LutProvider {
-    public Lut EDGESRELX;
-    public Lut EDGESRELY;
-    public Lut EDGESRELZ;
+        var cell = new Cell(luts, nx, ny, nz);
+
+        var nx_bound = nx - 2*st;
+        var ny_bound = ny - 2*st;
+        var nz_bound = nz - 2*st;
+
+        int z = -st;
+        while (z < nz_bound)
+        {
+            z += st;
+            var z_st = z + st;
+            cell.NewZValue ();
+            int y = -st;
+            while (y < ny_bound)
+            {
+                y += st;
+                var y_st = y + st;
+                int x = -st;
+                while (x < nx_bound)
+                {
+                    throw new NotImplementedException ();
+                }
+            }
+        }
+
+        return new Mesh (cell.Vertices, cell.Normals, cell.Faces);
+    }
 }
