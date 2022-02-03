@@ -123,7 +123,7 @@ public class VolumeTests
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
-            5, 5, 5);
+            5, 5, 5, maxDegreeOfParallelism: 2);
         Assert.AreEqual(-0.5f, v[2, 2, 2], 1.0e-3f);
     }
 }

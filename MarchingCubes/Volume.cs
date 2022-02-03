@@ -22,26 +22,33 @@ public static class Volume
         return volume;
     }
 
-    public static float[,,] SampleSdfZPlanes(Action<Vector3[], float[]> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz)
+    public static float[,,] SampleSdfZPlanes(Action<Vector3[], float[]> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int maxDegreeOfParallelism = -1)
     {
         var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
         Vector3 p = min;
         var nplane = nx * ny;
-        var positions = new Vector3[nplane];
-        var values = new float[nplane];
-        for (int iy = 0; iy < ny; iy++)
-        {
-            var y = min.Y + iy * dy;
-            for (int ix = 0; ix < nx; ix++)
+        
+        var options = new System.Threading.Tasks.ParallelOptions { 
+            MaxDegreeOfParallelism = maxDegreeOfParallelism,
+        };
+        System.Threading.Tasks.Parallel.For<(Vector3[],float[])>(0, nz, () => {
+            var positions = new Vector3[nplane];
+            var values = new float[nplane];
+            for (int iy = 0; iy < ny; iy++)
             {
-                var i = ix+iy*nx;
-                positions[i].X = min.X + ix * dx;
-                positions[i].Y = y;
-                positions[i].Z = min.Z;
+                var y = min.Y + iy * dy;
+                for (int ix = 0; ix < nx; ix++)
+                {
+                    var i = ix+iy*nx;
+                    positions[i].X = min.X + ix * dx;
+                    positions[i].Y = y;
+                    positions[i].Z = min.Z;
+                }
             }
-        }
-        for (int iz = 0; iz < nz; iz++)
+            return (positions, values);
+        }, (iz, _, pvs) =>
         {
+            var (positions, values) = pvs;
             var z = min.Z + iz * dz;
             for (int i = 0; i < nplane; i++)
             {
@@ -56,7 +63,10 @@ public static class Volume
                     volume[ix, iy, iz] = values[i];
                 }
             }
-        }
+            return pvs;
+        }, x => {
+            // No cleanup needed
+        });
         return volume;
     }
 
