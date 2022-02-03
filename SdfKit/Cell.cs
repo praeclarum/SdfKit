@@ -27,7 +27,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-namespace MarchingCubes;
+namespace SdfKit;
 
 /// <summary>
 /// Class to keep track of some stuff during the whole cube marching

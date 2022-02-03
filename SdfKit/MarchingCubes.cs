@@ -27,15 +27,15 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //
 
-namespace MarchingCubes;
+namespace SdfKit;
 
-public class LewinerMarchingCubes : IVolumeMesher
+public class MarchingCubes : IVolumeMesher
 {
     const double FLT_EPSILON = 0.0000001;
 
     readonly LutProvider luts;
 
-    public LewinerMarchingCubes(LutProvider luts)
+    public MarchingCubes(LutProvider luts)
     {
         this.luts = luts;
     }

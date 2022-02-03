@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MarchingCubes\MarchingCubes.csproj" />
+    <ProjectReference Include="..\SdfKit\SdfKit.csproj" />
   </ItemGroup>
 
 </Project>

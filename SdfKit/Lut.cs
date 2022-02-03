@@ -5,11 +5,11 @@
  * @version 0.2
  * @date    12/08/2002
  *
- * @brief   LookUpTable for the MarchingCubes 33 Algorithm
+ * @brief   LookUpTable for the SdfKit 33 Algorithm
  */
 //________________________________________________
 
-namespace MarchingCubes;
+namespace SdfKit;
 
 public class Lut1 {
     sbyte[] values;

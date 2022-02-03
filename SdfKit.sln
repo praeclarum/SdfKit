@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarchingCubes", "MarchingCubes\MarchingCubes.csproj", "{8463320B-1B8B-44FA-8DE5-9E2766C89EB8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdfKit", "SdfKit\SdfKit.csproj", "{8463320B-1B8B-44FA-8DE5-9E2766C89EB8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{FA8F70D6-2001-4642-9DD0-B110782B2D99}"
 EndProject

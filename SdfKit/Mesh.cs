@@ -1,4 +1,4 @@
-namespace MarchingCubes;
+namespace SdfKit;
 
 using System.IO;
 
