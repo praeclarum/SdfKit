@@ -1,5 +1,3 @@
-using NUnit.Framework;
-
 namespace Tests;
 
 public class LewinerTests
@@ -10,8 +8,14 @@ public class LewinerTests
     }
 
     [Test]
-    public void Test1()
+    public void Sphere10()
     {
-        Assert.Pass();
+        var volume = Volume.SampleSphere(1, 0.5f, 10, 10, 10);
+        Assert.AreEqual(10, volume.GetLength(0));
+        var luts = new LutProvider();
+        var mc = new LewinerMarchingCubes(luts);
+        var mesh = mc.CreateMesh(volume, 0.0f, 1);
+        mesh.WriteObj("Sphere10.obj");
+        Assert.AreEqual(222, mesh.Vertices.Length);
     }
 }
