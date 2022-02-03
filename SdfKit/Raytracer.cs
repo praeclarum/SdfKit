@@ -18,6 +18,22 @@ public class Raytracer
         this.sdf = sdf;
     }
 
+    public Vec3Data Render()
+    {
+        using var fragCoord = NewVec2();
+        var fragCoordV = fragCoord.Values;
+        var i = 0;
+        for (var y = 0; y < height; ++y)
+        {
+            for (var x = 0; x < width; ++x)
+            {
+                fragCoordV[i++] = x;
+                fragCoordV[i++] = y;
+            }
+        }
+        return Render(fragCoord);
+    }
+
     /// <summary>
     /// Renders the SDF to a bitmap. Returns a color for every pixel in fragCoord.
     /// </summary>
@@ -56,7 +72,7 @@ public class Raytracer
     {
         var data = NewVec3();
         var v = data.Values;
-        var n = v.Length;
+        var n = data.Length;
         for (int i = 0; i < n; ) {
             v[i++] = x;
             v[i++] = y;
@@ -69,7 +85,7 @@ public class Raytracer
         var data = NewVec3();
         var v = data.Values;
         var bv = xy.Values;
-        var n = v.Length;
+        var n = data.Length;
         for (int i = 0, j = 0; i < n; ) {
             var x = bv[j++];
             var y = bv[j++];
@@ -84,7 +100,7 @@ public class Raytracer
         var data = NewVec3();
         var v = data.Values;
         var bv = xyz.Values;
-        var n = v.Length;
+        var n = data.Length;
         for (int i = 0; i < n; i += 3) {
             var x = bv[i];
             var y = bv[i+1];
@@ -97,12 +113,13 @@ public class Raytracer
         return data;
     }
 
-    class FrameData : IDisposable
+    public class FrameData : IDisposable
     {
         public readonly float[] Values;
         public readonly int Width;
         public readonly int Height;
         public readonly int Dimensions;
+        public readonly int Length;
         public readonly ArrayPool<float> Pool;
         bool returned;
 
@@ -112,7 +129,8 @@ public class Raytracer
             this.Height = height;
             this.Dimensions = dim;
             this.Pool = pool;
-            Values = pool.Rent(width * height * dim);
+            Length = width * height * dim;
+            Values = pool.Rent(Length);
         }
 
         public void Dispose()
@@ -130,8 +148,8 @@ public class Raytracer
 
         protected void GenericAddInplace(FrameData other)
         {
-            var n = Values.Length;
-            Debug.Assert(Values.Length == other.Values.Length);
+            var n = Length;
+            Debug.Assert(Length == other.Length);
             for (int i = 0; i < n; i++) {
                 Values[i] += other.Values[i];
             }
@@ -139,14 +157,14 @@ public class Raytracer
 
         protected void GenericMultiplyInplace(FrameData other)
         {
-            var n = Values.Length;
-            Debug.Assert(Values.Length == other.Values.Length);
+            var n = Length;
+            Debug.Assert(Length == other.Length);
             for (int i = 0; i < n; i++) {
                 Values[i] *= other.Values[i];
             }
         }
     }
-    class FloatData : FrameData
+    public class FloatData : FrameData
     {
         public FloatData(int width, int height, ArrayPool<float> pool) 
             : base(width, height, 1, pool)
@@ -156,14 +174,14 @@ public class Raytracer
         public void AddInplace(FloatData other) => GenericAddInplace(other);
         public void MultiplyInplace(FloatData other) => GenericMultiplyInplace(other);
     }
-    class Vec2Data : FrameData
+    public class Vec2Data : FrameData
     {
         public Vec2Data(int width, int height, ArrayPool<float> pool) 
             : base(width, height, 2, pool)
         {
         }
     }
-    class Vec3Data : FrameData
+    public class Vec3Data : FrameData
     {
         public Vec3Data(int width, int height, ArrayPool<float> pool) 
             : base(width, height, 3, pool)
@@ -173,7 +191,7 @@ public class Raytracer
         public Vec3Data(Vec3Data other)
             : base(other.Width, other.Height, other.Dimensions, other.Pool)
         {
-            Buffer.BlockCopy(other.Values, 0, Values, 0, Values.Length * sizeof(float));
+            Buffer.BlockCopy(other.Values, 0, Values, 0, Length * sizeof(float));
         }
 
         public static Vec3Data operator +(Vec3Data a, Vec3Data b)
@@ -192,10 +210,14 @@ public class Raytracer
 
         public void MultiplyInplace(FloatData other)
         {
-            var n = Values.Length;
-            Debug.Assert(Values.Length == other.Values.Length);
-            for (int i = 0; i < n; i++) {
-                Values[i] *= other.Values[i];
+            var n = Length;
+            Debug.Assert(Length == 3*other.Length);
+            var bv = other.Values;
+            for (int i = 0, j = 0; i < n; ) {
+                var x = bv[j++];
+                Values[i++] *= x;
+                Values[i++] *= x;
+                Values[i++] *= x;
             }
         }
     }
