@@ -4,25 +4,7 @@ public static class Volume
 {
     public static float[,,] SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz)
     {
-        float dx = nx > 1 ? (max.X - min.X) / (nx - 1) : 0.0f;
-        float dy = ny > 1 ? (max.Y - min.Y) / (ny - 1) : 0.0f;
-        float dz = nz > 1 ? (max.Z - min.Z) / (nz - 1) : 0.0f;
-        if (nx <= 1)
-        {
-            min.X = (min.X + max.X) / 2.0f;
-            nx = 1;
-        }
-        if (ny <= 1)
-        {
-            min.Y = (min.Y + max.Y) / 2.0f;
-            ny = 1;
-        }
-        if (nz <= 1)
-        {
-            min.Z = (min.Z + max.Z) / 2.0f;
-            nz = 1;
-        }
-        float[,,] volume = new float[nx, ny, nz];
+        var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
         Vector3 p = min;
         for (int iz = 0; iz < nz; iz++)
         {
@@ -38,6 +20,67 @@ public static class Volume
             }
         }
         return volume;
+    }
+
+    public static float[,,] SampleSdfZPlanes(Action<Vector3[], float[]> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz)
+    {
+        var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
+        Vector3 p = min;
+        var nplane = nx * ny;
+        var positions = new Vector3[nplane];
+        var values = new float[nplane];
+        for (int iy = 0; iy < ny; iy++)
+        {
+            var y = min.Y + iy * dy;
+            for (int ix = 0; ix < nx; ix++)
+            {
+                var i = ix+iy*nx;
+                positions[i].X = min.X + ix * dx;
+                positions[i].Y = y;
+                positions[i].Z = min.Z;
+            }
+        }
+        for (int iz = 0; iz < nz; iz++)
+        {
+            var z = min.Z + iz * dz;
+            for (int i = 0; i < nplane; i++)
+            {
+                positions[i].Z = z;
+            }
+            sdf(positions, values);
+            for (int iy = 0; iy < ny; iy++)
+            {
+                for (int ix = 0; ix < nx; ix++)
+                {
+                    var i = ix+iy*nx;
+                    volume[ix, iy, iz] = values[i];
+                }
+            }
+        }
+        return volume;
+    }
+
+    static float[,,] CreateSamplingVolume(ref Vector3 min, Vector3 max, ref int nx, ref int ny, ref int nz, out float dx, out float dy, out float dz)
+    {
+        dx = nx > 1 ? (max.X - min.X) / (nx - 1) : 0.0f;
+        dy = ny > 1 ? (max.Y - min.Y) / (ny - 1) : 0.0f;
+        dz = nz > 1 ? (max.Z - min.Z) / (nz - 1) : 0.0f;
+        if (nx <= 1)
+        {
+            min.X = (min.X + max.X) / 2.0f;
+            nx = 1;
+        }
+        if (ny <= 1)
+        {
+            min.Y = (min.Y + max.Y) / 2.0f;
+            ny = 1;
+        }
+        if (nz <= 1)
+        {
+            min.Z = (min.Z + max.Z) / 2.0f;
+            nz = 1;
+        }
+        return new float[nx, ny, nz];
     }
 
     public static float[,,] SampleSphere(float r, Vector3 min, Vector3 max, int nx, int ny, int nz)

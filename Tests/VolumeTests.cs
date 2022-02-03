@@ -92,7 +92,7 @@ public class VolumeTests
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             5, 5, 5);
-        Assert.Less(v[2, 2, 2], -1.0e-6f);
+        Assert.AreEqual(-0.5f, v[2, 2, 2], 1.0e-3f);
     }
 
     [Test]
@@ -105,6 +105,25 @@ public class VolumeTests
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             5, 5, 5);
-        Assert.Less(v[2, 2, 2], -1.0e-6f);
+        Assert.AreEqual(-0.5f, v[2, 2, 2], 1.0e-3f);
+    }
+
+    [Test]
+    public void SphereWidthSdfPlanes()
+    {
+        var r = 0.5f;
+        var sdf = (Vector3[] ps, float[] ds) => {
+            var n = ps.Length;
+            for (var i = 0; i < n; ++i)
+            {
+                ds[i] = ps[i].Length() - r;
+            }
+        };
+        var v = Volume.SampleSdfZPlanes(
+            sdf,
+            new Vector3(-1, -1, -1),
+            new Vector3(1, 1, 1),
+            5, 5, 5);
+        Assert.AreEqual(-0.5f, v[2, 2, 2], 1.0e-3f);
     }
 }
