@@ -58,7 +58,7 @@ namespace SdfKit;
 /// the 8 corners of the current cube, but because the final value of a normal
 /// was contributed from multiple cells, the normals are quite accurate.
 /// </summary>
-public class Cell
+class Cell
 {
     const double FLT_EPSILON = 0.0000001;
 
@@ -120,11 +120,8 @@ public class Cell
     int index;
     public int Index => index;
 
-    readonly LutProvider luts;
-
-    public Cell(LutProvider luts, int nx, int ny, int nz)
+    public Cell(int nx, int ny, int nz)
     {
-        this.luts = luts;
         this.nx = nx;
         this.ny = ny;
         this.nz = nz;
@@ -220,14 +217,14 @@ public class Cell
     /// <summary>
     /// The vertices for the triangles are specified in the given Lut at the specified index. There are nt triangles.
     /// </summary>
-    public void AddTriangles(Lut2 lut, int lutIndex, int nt)
+    public void AddTriangles(sbyte[,] lut, int lutIndex, int nt)
     {
         PrepareForAddingTriangles();
         for (int i = 0; i < nt; i++)
         {
             for (int j = 0; j < 3; j++)
             {
-                var vi = lut.Get2(lutIndex, i * 3 + j);
+                var vi = lut[lutIndex, i * 3 + j];
                 AddFaceFromEdgeIndex(vi);
             }
         }
@@ -236,14 +233,14 @@ public class Cell
     /// <summary>
     /// Same as AddTriangles, except that now the geometry is in a LUT with 3 dimensions, and an extra index is provided.
     /// </summary>
-    public void AddTriangles2(Lut3 lut, int lutIndex, int lutIndex2, int nt)
+    public void AddTriangles2(sbyte[,,] lut, int lutIndex, int lutIndex2, int nt)
     {
         PrepareForAddingTriangles();
         for (int i = 0; i < nt; i++)
         {
             for (int j = 0; j < 3; j++)
             {
-                var vi = lut.Get3(lutIndex, lutIndex2, i * 3 + j);
+                var vi = lut[lutIndex, lutIndex2, i * 3 + j];
                 AddFaceFromEdgeIndex(vi);
             }
         }
@@ -296,9 +293,9 @@ public class Cell
         else
         {
             // Get relative edge indices for x, y and z
-            (dx1, dx2) = (luts.EDGESRELX.Get2(vi, 0), luts.EDGESRELX.Get2(vi, 1));
-            (dy1, dy2) = (luts.EDGESRELY.Get2(vi, 0), luts.EDGESRELY.Get2(vi, 1));
-            (dz1, dz2) = (luts.EDGESRELZ.Get2(vi, 0), luts.EDGESRELZ.Get2(vi, 1));
+            (dx1, dx2) = (Luts.edgesrelx[vi, 0], Luts.edgesrelx[vi, 1]);
+            (dy1, dy2) = (Luts.edgesrely[vi, 0], Luts.edgesrely[vi, 1]);
+            (dz1, dz2) = (Luts.edgesrelz[vi, 0], Luts.edgesrelz[vi, 1]);
             // Make two vertex indices
             index1 = dz1 * 4 + dy1 * 2 + dx1;
             index2 = dz2 * 4 + dy2 * 2 + dx2;
@@ -314,7 +311,6 @@ public class Cell
                 AddFace(indexInVertexArray);
                 AddGradientFromIndex(indexInVertexArray, index1, tmpf1);
                 AddGradientFromIndex(indexInVertexArray, index2, tmpf2);
-
             }
             else
             {
