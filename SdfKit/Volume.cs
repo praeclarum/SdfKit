@@ -31,7 +31,7 @@ public static class Volume
         var options = new System.Threading.Tasks.ParallelOptions { 
             MaxDegreeOfParallelism = maxDegreeOfParallelism,
         };
-        System.Threading.Tasks.Parallel.For<(Vector3[],float[])>(0, nz, () => {
+        System.Threading.Tasks.Parallel.For<(Vector3[],float[])>(0, nz, options, () => {
             var positions = new Vector3[nplane];
             var values = new float[nplane];
             for (int iy = 0; iy < ny; iy++)
