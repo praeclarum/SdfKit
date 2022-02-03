@@ -22,7 +22,7 @@ public static class Volume
         return volume;
     }
 
-    public static float[,,] SampleSdfBatches(Action<Vector3[], float[], int> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize, int maxDegreeOfParallelism = -1)
+    public static float[,,] SampleSdfBatches(Action<Vector3[], float[], int> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = 2*1024, int maxDegreeOfParallelism = -1)
     {
         var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
         var ntotal = nx * ny * nz;
@@ -150,9 +150,7 @@ public static class Volume
             sdf,
             min,
             max,
-            nx, ny, nz,
-            batchSize: 1024,
-            maxDegreeOfParallelism: -1);
+            nx, ny, nz);
     }
 
     public static float[,,] SampleSphere(float r, float padding, int nx, int ny, int nz)

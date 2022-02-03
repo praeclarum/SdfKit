@@ -134,8 +134,8 @@ public class VolumeTests
         var r = 0.5f;
         var sdf = (Vector3[] ps, float[] ds, int n) => {
             // Console.WriteLine($"Thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}, N = {n}");
-            if (n != 36)
-                Assert.AreEqual(70, n);
+            // if (n != 36)
+            //     Assert.AreEqual(70, n);
             for (var i = 0; i < n; ++i)
             {
                 ds[i] = ps[i].Length() - r;
@@ -147,9 +147,7 @@ public class VolumeTests
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
-            256, 256, 256,
-            batchSize: 70,
-            maxDegreeOfParallelism: -1);
+            256, 256, 256);
         sw.Stop();
         Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds} ms");
         Assert.AreEqual(-0.5f, v[127, 127, 127], 1.0e-2f);
