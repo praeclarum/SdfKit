@@ -128,13 +128,16 @@ public class VolumeTests
     public void SphereWithBatchSize()
     {
         var r = 0.5f;
-        var sdf = (Vector3[] ps, float[] ds, int n) => {
+        var sdf = (Memory<Vector3> ps, Memory<float> ds) => {
             // Console.WriteLine($"Thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}, N = {n}");
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
             if (n != 22)
                 Assert.AreEqual(70, n);
             for (var i = 0; i < n; ++i)
             {
-                ds[i] = ps[i].Length() - r;
+                d[i] = p[i].Length() - r;
             }
         };
         var sw = new Stopwatch();

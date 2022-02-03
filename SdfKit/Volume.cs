@@ -41,7 +41,7 @@ public class Volume : IVolume
         return MarchingCubes.CreateMesh(this, isoValue, step, progress);
     }
 
-    public void SampleSdf(Action<Vector3[], float[], int> sdf, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public void SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var volume = Values;
         var nx = NX;
@@ -78,7 +78,9 @@ public class Volume : IVolume
                 p.Z = min.Z + iz * dz;
                 positions[i - startI] = p;
             }
-            sdf(positions, values, endI - startI);
+            var pmem = positions.AsMemory().Slice(0, endI - startI);
+            var vmem = values.AsMemory().Slice(0, endI - startI);
+            sdf(pmem, vmem);
             for (int i = startI; i < endI; i++)
             {
                 var ix = i % nx;
@@ -94,17 +96,20 @@ public class Volume : IVolume
 
     public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        void BatchedSdf(Vector3[] positions, float[] values, int count)
+        void BatchedSdf(Memory<Vector3> positions, Memory<float> values)
         {
+            var count = positions.Length;
+            var p = positions.Span;
+            var v = values.Span;
             for (int i = 0; i < count; i++)
             {
-                values[i] = sdf(positions[i]);
+                v[i] = sdf(p[i]);
             }
         }
         return SampleSdf(BatchedSdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
-    public static Volume SampleSdf(Action<Vector3[], float[], int> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var volume = new Volume(min, max, nx, ny, nz);
         volume.SampleSdf(sdf, batchSize, maxDegreeOfParallelism);
@@ -142,10 +147,13 @@ public class Volume : IVolume
 
     public static Volume SampleSphere(float r, Vector3 min, Vector3 max, int nx, int ny, int nz)
     {
-        var sdf = (Vector3[] ps, float[] ds, int n) => {
+        var sdf = (Memory<Vector3> ps, Memory<float> ds) => {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
             for (var i = 0; i < n; ++i)
             {
-                ds[i] = ps[i].Length() - r;
+                d[i] = p[i].Length() - r;
             }
         };
         return SampleSdf(

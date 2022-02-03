@@ -13,10 +13,13 @@ public class SdfTests
     {
         var r = 0.5f;
         var sdf = Sdf.FromAction(
-            (ps, ds, n) => {
+            (ps, ds) => {
+                int n = ps.Length;
+                var p = ps.Span;
+                var d = ds.Span;
                 for (var i = 0; i < n; ++i)
                 {
-                    ds[i] = ps[i].Length() - r;
+                    d[i] = p[i].Length() - r;
                 }
             },
             new Vector3(-1, -1, -1),
@@ -30,10 +33,13 @@ public class SdfTests
     {
         var r = 0.5f;
         var sdf = Sdf.FromAction(
-            (ps, ds, n) => {
+            (ps, ds) => {
+                int n = ps.Length;
+                var p = ps.Span;
+                var d = ds.Span;
                 for (var i = 0; i < n; ++i)
                 {
-                    ds[i] = ps[i].Length() - r;
+                    d[i] = p[i].Length() - r;
                 }
             },
             new Vector3(-1, -1, -1),

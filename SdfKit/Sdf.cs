@@ -17,7 +17,7 @@ public abstract class Sdf : IVolume
         Max = max;
     }
 
-    public abstract void SampleBatch(Vector3[] points, float[] distances, int count);
+    public abstract void SampleBatch(Memory<Vector3> points, Memory<float> distances);
 
     public virtual Volume CreateVolume(int nx, int ny, int nz, int batchSize = Volume.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
@@ -32,7 +32,7 @@ public abstract class Sdf : IVolume
         return volume.CreateMesh(isoValue, step, progress);
     }
 
-    public static ActionSdf FromAction(Action<Vector3[], float[], int> sdf, Vector3 min, Vector3 max)
+    public static ActionSdf FromAction(Action<Memory<Vector3>, Memory<float>> sdf, Vector3 min, Vector3 max)
     {
         return new ActionSdf(sdf, min, max);
     }
@@ -40,18 +40,18 @@ public abstract class Sdf : IVolume
 
 public class ActionSdf : Sdf
 {
-    public delegate void SampleBatchDelegate(Vector3[] points, float[] distances, int count);
+    public delegate void SampleBatchDelegate(Memory<Vector3> points, Memory<float> distances);
 
-    Action<Vector3[], float[], int> sampleAction;
+    Action<Memory<Vector3>, Memory<float>> sampleAction;
 
-    public ActionSdf(Action<Vector3[], float[], int> action, Vector3 min, Vector3 max)
+    public ActionSdf(Action<Memory<Vector3>, Memory<float>> action, Vector3 min, Vector3 max)
         : base(min, max)
     {
         sampleAction = action;
     }
 
-    public override void SampleBatch(Vector3[] points, float[] distances, int count)
+    public override void SampleBatch(Memory<Vector3> points, Memory<float> distances)
     {
-        sampleAction(points, distances, count);
+        sampleAction(points, distances);
     }
 }
