@@ -39,13 +39,14 @@ public class Raytracer
 
     FloatData Map(Vec3Data p)
     {
+        var distances = NewFloat();
         throw new NotImplementedException ();
     }
 
-    FloatData NewFlt() => new FloatData(width, height, pool);
+    FloatData NewFloat() => new FloatData(width, height, pool);
     FloatData Float(float x)
     {
-        var data = NewFlt();
+        var data = NewFloat();
         Array.Fill(data.Values, x);
         return data;
     }
@@ -54,17 +55,46 @@ public class Raytracer
     Vec3Data Vec3(float x, float y, float z)
     {
         var data = NewVec3();
-        throw new NotImplementedException ();
+        var v = data.Values;
+        var n = v.Length;
+        for (int i = 0; i < n; ) {
+            v[i++] = x;
+            v[i++] = y;
+            v[i++] = z;
+        }
+        return data;
     }
     Vec3Data Vec3(Vec2Data xy, float z)
     {
         var data = NewVec3();
-        throw new NotImplementedException ();
+        var v = data.Values;
+        var bv = xy.Values;
+        var n = v.Length;
+        for (int i = 0, j = 0; i < n; ) {
+            var x = bv[j++];
+            var y = bv[j++];
+            v[i++] = x;
+            v[i++] = y;
+            v[i++] = z;
+        }
+        return data;
     }
     Vec3Data Normalize(Vec3Data xyz)
     {
         var data = NewVec3();
-        throw new NotImplementedException ();
+        var v = data.Values;
+        var bv = xyz.Values;
+        var n = v.Length;
+        for (int i = 0; i < n; i += 3) {
+            var x = bv[i];
+            var y = bv[i+1];
+            var z = bv[i+2];
+            var r = 1.0f / MathF.Sqrt(x*x + y*y + z*z);
+            v[i] = x*r;
+            v[i+1] = y*r;
+            v[i+2] = z*r;
+        }
+        return data;
     }
 
     class FrameData : IDisposable
