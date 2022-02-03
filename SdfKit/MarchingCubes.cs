@@ -29,11 +29,11 @@
 
 namespace SdfKit;
 
-public class MarchingCubes : IVolumeMesher
+public static class MarchingCubes
 {
     const double FLT_EPSILON = 0.0000001;
 
-    public Mesh CreateMesh(float[,,] volume, float isovalue, int st)
+    public static Mesh CreateMesh(float[,,] volume, float isovalue, int st)
     {
         int nx = volume.GetLength(0);
         int ny = volume.GetLength(1);
@@ -76,7 +76,7 @@ public class MarchingCubes : IVolumeMesher
         return new Mesh (cell.Vertices, cell.Normals, cell.Faces);
     }
 
-    void TheBigSwitch(Cell cell, int cas, int config)
+    static void TheBigSwitch(Cell cell, int cas, int config)
     {
         int subconfig = 0;
 
@@ -358,7 +358,7 @@ public class MarchingCubes : IVolumeMesher
     /// <summary>
     /// Return True if the face contains part of the surface.
     /// </summary>
-    bool TestFace(Cell cell, int face)
+    static bool TestFace(Cell cell, int face)
     {
         // Get face absolute value
         int absFace = face;
@@ -394,7 +394,7 @@ public class MarchingCubes : IVolumeMesher
     /// <summary>
     // Return True of the face contains part of the surface.
     /// </summary>
-    bool TestInternal(Cell cell, int cas, int config, int subconfig, int s)
+    static bool TestInternal(Cell cell, int cas, int config, int subconfig, int s)
     {
         double t, At=0.0, Bt=0.0, Ct=0.0, Dt=0.0, a, b;
         int test = 0;
