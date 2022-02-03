@@ -5,8 +5,6 @@ namespace SdfKit;
 /// </summary>
 public class Volume : IVolume
 {
-    public const int DefaultBatchSize = 2*1024;
-
     public readonly float[,,] Values;
     public int NX => Values.GetLength(0);
     public int NY => Values.GetLength(1);
@@ -41,7 +39,7 @@ public class Volume : IVolume
         return MarchingCubes.CreateMesh(this, isoValue, step, progress);
     }
 
-    public void SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public void SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var volume = Values;
         var nx = NX;
@@ -94,12 +92,12 @@ public class Volume : IVolume
         });
     }
 
-    public static Volume SampleSdf(Sdf sdf, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdf(Sdf sdf, int nx, int ny, int nz, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         return SampleSdf(sdf.SampleBatch, sdf.Min, sdf.Max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
-    public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         void BatchedSdf(Memory<Vector3> positions, Memory<float> values)
         {
@@ -114,7 +112,7 @@ public class Volume : IVolume
         return SampleSdf(BatchedSdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
-    public static Volume SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var volume = new Volume(min, max, nx, ny, nz);
         volume.SampleSdf(sdf, batchSize, maxDegreeOfParallelism);

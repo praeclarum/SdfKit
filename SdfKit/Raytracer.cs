@@ -39,7 +39,7 @@ public class Raytracer
     /// </summary>
     Vec3Data Render(Vec2Data fragCoord)
     {
-        var uv = fragCoord;
+        using var uv = fragCoord / new Vector2(width-1, height-1) * 2.0f - 1.0f;
         using var ro = Vec3(0, 0, 5);
         using var nearPlane = Vec3(uv, -3);
         using var rd = Normalize(nearPlane);
@@ -56,7 +56,8 @@ public class Raytracer
     FloatData Map(Vec3Data p)
     {
         var distances = NewFloat();
-        throw new NotImplementedException ();
+        sdf.Sample(p.ValuesMemory, distances.ValuesMemory);
+        return distances;
     }
 
     FloatData NewFloat() => new FloatData(width, height, pool);
@@ -123,6 +124,8 @@ public class Raytracer
         public readonly ArrayPool<float> Pool;
         bool returned;
 
+        public Memory<float> ValuesMemory => Values.AsMemory(0, Length);
+
         public FrameData(int width, int height, int dim, ArrayPool<float> pool)
         {
             this.Width = width;
@@ -143,6 +146,34 @@ public class Raytracer
             if (!returned) {
                 Pool.Return(Values);
                 returned = true;
+            }
+        }
+        public void AddInplace(float other)
+        {
+            var n = Length;
+            for (int i = 0; i < n; i++) {
+                Values[i] += other;
+            }
+        }
+        public void SubtractInplace(float other)
+        {
+            var n = Length;
+            for (int i = 0; i < n; i++) {
+                Values[i] -= other;
+            }
+        }
+        public void MultiplyInplace(float other)
+        {
+            var n = Length;
+            for (int i = 0; i < n; i++) {
+                Values[i] *= other;
+            }
+        }
+        public void DivideInplace(float other)
+        {
+            var n = Length;
+            for (int i = 0; i < n; i++) {
+                Values[i] /= other;
             }
         }
 
@@ -180,6 +211,90 @@ public class Raytracer
             : base(width, height, 2, pool)
         {
         }
+        public Vec2Data(Vec2Data other)
+            : base(other.Width, other.Height, other.Dimensions, other.Pool)
+        {
+            Buffer.BlockCopy(other.Values, 0, Values, 0, Length * sizeof(float));
+        }
+
+        public static Vec2Data operator +(Vec2Data a, Vec2Data b)
+        {
+            var data = new Vec2Data(a);
+            data.GenericAddInplace(b);
+            return data;
+        }
+        public static Vec2Data operator *(Vec2Data a, FloatData b)
+        {
+            var data = new Vec2Data(a);
+            data.MultiplyInplace(b);
+            return data;
+        }
+        public void MultiplyInplace(FloatData other)
+        {
+            var n = Length;
+            Debug.Assert(Length == 2*other.Length);
+            var bv = other.Values;
+            for (int i = 0, j = 0; i < n; ) {
+                var x = bv[j++];
+                Values[i++] *= x;
+                Values[i++] *= x;
+            }
+        }
+        public static Vec2Data operator +(Vec2Data a, float b)
+        {
+            var data = new Vec2Data(a);
+            data.AddInplace(b);
+            return data;
+        }
+        public static Vec2Data operator -(Vec2Data a, float b)
+        {
+            var data = new Vec2Data(a);
+            data.SubtractInplace(b);
+            return data;
+        }
+        public static Vec2Data operator *(Vec2Data a, float b)
+        {
+            var data = new Vec2Data(a);
+            data.MultiplyInplace(b);
+            return data;
+        }
+        public static Vec2Data operator /(Vec2Data a, float b)
+        {
+            var data = new Vec2Data(a);
+            data.DivideInplace(b);
+            return data;
+        }
+        public static Vec2Data operator /(Vec2Data a, Vector2 b)
+        {
+            var data = new Vec2Data(a);
+            data.DivideInplace(b);
+            return data;
+        }
+        public void DivideInplace(Vector2 other)
+        {
+            var n = Length;
+            for (int i = 0; i < n; ) {
+                Values[i++] /= other.X;
+                Values[i++] /= other.Y;
+            }
+        }
+        public static Vec2Data operator /(Vec2Data a, FloatData b)
+        {
+            var data = new Vec2Data(a);
+            data.DivideInplace(b);
+            return data;
+        }
+        public void DivideInplace(FloatData other)
+        {
+            var n = Length;
+            Debug.Assert(Length == 2*other.Length);
+            var bv = other.Values;
+            for (int i = 0, j = 0; i < n; ) {
+                var x = bv[j++];
+                Values[i++] /= x;
+                Values[i++] /= x;
+            }
+        }
     }
     public class Vec3Data : FrameData
     {
@@ -187,7 +302,6 @@ public class Raytracer
             : base(width, height, 3, pool)
         {
         }
-
         public Vec3Data(Vec3Data other)
             : base(other.Width, other.Height, other.Dimensions, other.Pool)
         {
@@ -200,14 +314,12 @@ public class Raytracer
             data.GenericAddInplace(b);
             return data;
         }
-
         public static Vec3Data operator *(Vec3Data a, FloatData b)
         {
             var data = new Vec3Data(a);
             data.MultiplyInplace(b);
             return data;
         }
-
         public void MultiplyInplace(FloatData other)
         {
             var n = Length;

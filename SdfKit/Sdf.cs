@@ -5,6 +5,8 @@ namespace SdfKit;
 /// </summary>
 public abstract class Sdf : IVolume
 {
+    public const int DefaultBatchSize = 2*1024;
+
     public Vector3 Min { get; protected set; }
     public Vector3 Max { get; protected set; }
     public Vector3 Center => (Min + Max) * 0.5f;
@@ -19,12 +21,30 @@ public abstract class Sdf : IVolume
 
     public abstract void SampleBatch(Memory<Vector3> points, Memory<float> distances);
 
-    public virtual Volume CreateVolume(int nx, int ny, int nz, int batchSize = Volume.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public void Sample(Memory<Vector3> points, Memory<float> distances, int batchSize = DefaultBatchSize)
+    {
+        var i = 0;
+        var ntotal = distances.Length;
+        while (i < ntotal) {
+            var n = Math.Min(batchSize, ntotal - i);
+            SampleBatch(points.Slice(i, n), distances.Slice(i, n));
+            i += n;
+        }
+    }
+
+    public void Sample(Memory<float> pointFloats, Memory<float> distances, int batchSize = DefaultBatchSize)
+    {
+        Debug.Assert(sizeof(float)*3 == System.Runtime.InteropServices.Marshal.SizeOf(typeof(Vector3)));
+        var points = MemoryUtils.Cast<float, Vector3>(pointFloats);
+        Sample(points, distances, batchSize);
+    }
+
+    public virtual Volume CreateVolume(int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         return Volume.SampleSdf(this, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
-    public Mesh CreateMesh(int nx, int ny, int nz, int batchSize = Volume.DefaultBatchSize, int maxDegreeOfParallelism = -1, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
+    public Mesh CreateMesh(int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
     {
         var volume = CreateVolume(nx, ny, nz, batchSize, maxDegreeOfParallelism);
         return volume.CreateMesh(isoValue, step, progress);
@@ -57,8 +77,6 @@ public abstract class Sdf : IVolume
 /// </summary>
 public class ActionSdf : Sdf
 {
-    public delegate void SampleBatchDelegate(Memory<Vector3> points, Memory<float> distances);
-
     Action<Memory<Vector3>, Memory<float>> sampleAction;
 
     public ActionSdf(Action<Memory<Vector3>, Memory<float>> action, Vector3 min, Vector3 max)
