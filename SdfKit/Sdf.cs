@@ -21,9 +21,7 @@ public abstract class Sdf : IVolume
 
     public virtual Volume CreateVolume(int nx, int ny, int nz, int batchSize = Volume.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        var volume = new Volume(Min, Max, nx, ny, nz);
-        volume.SampleSdf(SampleBatch, batchSize, maxDegreeOfParallelism);
-        return volume;
+        return Volume.SampleSdf(this, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
     public Mesh CreateMesh(int nx, int ny, int nz, int batchSize = Volume.DefaultBatchSize, int maxDegreeOfParallelism = -1, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
@@ -35,6 +33,22 @@ public abstract class Sdf : IVolume
     public static ActionSdf FromAction(Action<Memory<Vector3>, Memory<float>> sdf, Vector3 min, Vector3 max)
     {
         return new ActionSdf(sdf, min, max);
+    }
+
+    public static Sdf CreateSphere(float radius, float padding = 0.0f)
+    {
+        var min = new Vector3(-radius - padding, -radius - padding, -radius - padding);
+        var max = new Vector3(radius + padding, radius + padding, radius + padding);
+        return Sdf.FromAction((ps, ds) =>
+        {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
+            for (var i = 0; i < n; ++i)
+            {
+                d[i] = p[i].Length() - radius;
+            }
+        }, min, max);
     }
 }
 

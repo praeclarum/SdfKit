@@ -116,8 +116,8 @@ public class VolumeTests
     {
         var r = 0.5f;
         var sdf = (Vector3 p) => p.Length() - r;
-        var v = Volume.SampleSphere(
-            r,
+        var v = Volume.SampleSdf(
+            sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             5, 5, 5);

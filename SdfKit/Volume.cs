@@ -94,6 +94,11 @@ public class Volume : IVolume
         });
     }
 
+    public static Volume SampleSdf(Sdf sdf, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    {
+        return SampleSdf(sdf.SampleBatch, sdf.Min, sdf.Max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
+    }
+
     public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         void BatchedSdf(Memory<Vector3> positions, Memory<float> values)
@@ -143,30 +148,5 @@ public class Volume : IVolume
             newMin.Z = (min.Z + max.Z) / 2.0f;
             nz = 1;
         }
-    }
-
-    public static Volume SampleSphere(float r, Vector3 min, Vector3 max, int nx, int ny, int nz)
-    {
-        var sdf = (Memory<Vector3> ps, Memory<float> ds) => {
-            int n = ps.Length;
-            var p = ps.Span;
-            var d = ds.Span;
-            for (var i = 0; i < n; ++i)
-            {
-                d[i] = p[i].Length() - r;
-            }
-        };
-        return SampleSdf(
-            sdf,
-            min,
-            max,
-            nx, ny, nz);
-    }
-
-    public static Volume SampleSphere(float r, float padding, int nx, int ny, int nz)
-    {
-        var min = new Vector3(-r - padding, -r - padding, -r - padding);
-        var max = new Vector3(r + padding, r + padding, r + padding);
-        return SampleSphere(r, min, max, nx, ny, nz);
     }
 }

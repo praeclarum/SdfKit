@@ -32,18 +32,7 @@ public class SdfTests
     public void CreateMeshSphere()
     {
         var r = 0.5f;
-        var sdf = Sdf.FromAction(
-            (ps, ds) => {
-                int n = ps.Length;
-                var p = ps.Span;
-                var d = ds.Span;
-                for (var i = 0; i < n; ++i)
-                {
-                    d[i] = p[i].Length() - r;
-                }
-            },
-            new Vector3(-1, -1, -1),
-            new Vector3(1, 1, 1));
+        var sdf = Sdf.CreateSphere(r, 0.5f);
         var mesh = sdf.CreateMesh(128, 128, 128);
         Assert.AreEqual(19008, mesh.Vertices.Length);
     }
