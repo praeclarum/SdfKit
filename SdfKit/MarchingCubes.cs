@@ -33,7 +33,7 @@ public static class MarchingCubes
 {
     const double FLT_EPSILON = 0.0000001;
 
-    public static Mesh CreateMesh(float[,,] volume, float isovalue, int st)
+    public static Mesh CreateMesh(float[,,] volume, float isovalue, int st, IProgress<float>? progress = null)
     {
         int nx = volume.GetLength(0);
         int ny = volume.GetLength(1);
@@ -71,6 +71,7 @@ public static class MarchingCubes
                     }
                 }
             }
+            progress?.Report((float)z / nz_bound);
         }
 
         return new Mesh (cell.Vertices, cell.Normals, cell.Faces);
