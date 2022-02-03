@@ -21,7 +21,7 @@ public abstract class Sdf : IVolume
 
     public abstract void SampleBatch(Memory<Vector3> points, Memory<float> distances);
 
-    public void Sample(Memory<Vector3> points, Memory<float> distances, int batchSize = DefaultBatchSize)
+    public void Sample(Memory<Vector3> points, Memory<float> distances, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var i = 0;
         var ntotal = distances.Length;

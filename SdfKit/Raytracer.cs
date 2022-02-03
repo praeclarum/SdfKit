@@ -6,16 +6,20 @@ namespace SdfKit;
 public class Raytracer
 {
     readonly Sdf sdf;
+    readonly int batchSize;
+    readonly int maxDegreeOfParallelism;
 
     readonly int width;
     readonly int height;
     readonly ArrayPool<float> pool = ArrayPool<float>.Create();
 
-    public Raytracer(int width, int height, Sdf sdf)
+    public Raytracer(int width, int height, Sdf sdf, int batchSize = Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         this.width = width;
         this.height = height;
         this.sdf = sdf;
+        this.batchSize = batchSize;
+        this.maxDegreeOfParallelism = maxDegreeOfParallelism;
     }
 
     /// <summary>
@@ -100,7 +104,7 @@ public class Raytracer
     FloatData Map(Vec3Data p)
     {
         var distances = NewFloat();
-        sdf.Sample(p.Vector3Memory, distances.FloatMemory);
+        sdf.Sample(p.Vector3Memory, distances.FloatMemory, batchSize, maxDegreeOfParallelism);
         return distances;
     }
 
