@@ -22,6 +22,51 @@ public static class Volume
         return volume;
     }
 
+    public static float[,,] SampleSdfBatches(Action<Vector3[], float[], int> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize, int maxDegreeOfParallelism = -1)
+    {
+        var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
+        var ntotal = nx * ny * nz;
+        var numBatches = (ntotal + batchSize - 1) / batchSize;
+        
+        var options = new System.Threading.Tasks.ParallelOptions { 
+            MaxDegreeOfParallelism = maxDegreeOfParallelism,
+        };
+        System.Threading.Tasks.Parallel.For<(Vector3[],float[])>(0, numBatches, options, () => {
+            var positions = new Vector3[batchSize];
+            var values = new float[batchSize];
+            
+            return (positions, values);
+        }, (ib, _, pvs) =>
+        {
+            var (positions, values) = pvs;
+            var startI = ib * batchSize;
+            var endI = Math.Min(ntotal, startI + batchSize);
+            Vector3 p = min;
+            for (int i = startI; i < endI; i++)
+            {
+                var ix = i % nx;
+                var iy = (i / nx) % ny;
+                var iz = i / (nx * ny);
+                p.X = min.X + ix * dx;
+                p.Y = min.Y + iy * dy;
+                p.Z = min.Z + iz * dz;
+                positions[i - startI] = p;
+            }
+            sdf(positions, values, endI - startI);
+            for (int i = startI; i < endI; i++)
+            {
+                var ix = i % nx;
+                var iy = (i / nx) % ny;
+                var iz = i / (nx * ny);
+                volume[ix, iy, iz] = values[i - startI];
+            }
+            return pvs;
+        }, x => {
+            // No cleanup needed
+        });
+        return volume;
+    }
+
     public static float[,,] SampleSdfZPlanes(Action<Vector3[], float[]> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int maxDegreeOfParallelism = -1)
     {
         var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
@@ -95,18 +140,25 @@ public static class Volume
 
     public static float[,,] SampleSphere(float r, Vector3 min, Vector3 max, int nx, int ny, int nz)
     {
-        var sdf = (Vector3 p) => p.Length() - r;
-        return Volume.SampleSdf(sdf, min, max, nx, ny, nz);
+        var sdf = (Vector3[] ps, float[] ds, int n) => {
+            for (var i = 0; i < n; ++i)
+            {
+                ds[i] = ps[i].Length() - r;
+            }
+        };
+        return SampleSdfBatches(
+            sdf,
+            min,
+            max,
+            nx, ny, nz,
+            batchSize: 1024,
+            maxDegreeOfParallelism: -1);
     }
 
     public static float[,,] SampleSphere(float r, float padding, int nx, int ny, int nz)
     {
-        var sdf = (Vector3 p) => p.Length() - r;
         var min = new Vector3(-r - padding, -r - padding, -r - padding);
         var max = new Vector3(r + padding, r + padding, r + padding);
-        return Volume.SampleSdf(sdf, min, max, nx, ny, nz);
+        return SampleSphere(r, min, max, nx, ny, nz);
     }
 }
-
-
-
