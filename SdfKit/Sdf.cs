@@ -38,6 +38,9 @@ public abstract class Sdf : IVolume
     }
 }
 
+/// <summary>
+/// A signed distance fuction that uses an Action to implement sampling.
+/// </summary>
 public class ActionSdf : Sdf
 {
     public delegate void SampleBatchDelegate(Memory<Vector3> points, Memory<float> distances);

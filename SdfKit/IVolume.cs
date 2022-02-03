@@ -1,5 +1,8 @@
 namespace SdfKit;
 
+/// <summary>
+/// A 3D volume bounded by an axis-aligned box with corners at Min and Max.
+/// </summary>
 public interface IVolume
 {
     Vector3 Min { get; }

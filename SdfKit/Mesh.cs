@@ -2,6 +2,9 @@ namespace SdfKit;
 
 using System.IO;
 
+/// <summary>
+/// A triangle mesh with normals.
+/// </summary>
 public class Mesh
 {
     public Vector3[] Vertices { get; }

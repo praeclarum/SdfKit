@@ -29,6 +29,9 @@
 
 namespace SdfKit;
 
+/// <summary>
+/// Marching cubes algorithm (Lewiner variant).
+/// </summary>
 public static class MarchingCubes
 {
     const double FLT_EPSILON = 0.0000001;

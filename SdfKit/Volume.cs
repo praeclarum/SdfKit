@@ -1,7 +1,7 @@
 namespace SdfKit;
 
 /// <summary>
-/// A regular grid of voxels.
+/// A regular 3D grid of distance values.
 /// </summary>
 public class Volume : IVolume
 {
