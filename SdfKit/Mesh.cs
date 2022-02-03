@@ -53,8 +53,8 @@ public class Mesh : IVolume
         normalTransform = Matrix4x4.Transpose(itransform);
         
         for (int i = 0; i < Vertices.Length; i++) {
-            var tv = Vector4.Transform(Vertices[i], transform);
-            var tvn = Vector4.Transform(new Vector4(Normals[i], 0), normalTransform);
+            var tv = Vector3.Transform(Vertices[i], transform);
+            var tvn = Vector3.TransformNormal(Normals[i], normalTransform);
             Vertices[i] = new Vector3(tv.X, tv.Y, tv.Z);
             Normals[i] = Vector3.Normalize(new Vector3(tvn.X, tvn.Y, tvn.Z));
         }
