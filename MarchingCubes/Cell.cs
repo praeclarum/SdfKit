@@ -87,7 +87,20 @@ public class Cell
     int VertexCount => vertices.Count;
 
     public Vector3[] Vertices => vertices.ToArray();
-    public Vector3[] Normals => normals.ToArray();
+    public Vector3[] Normals
+    {
+        get
+        {
+            var n = normals.Count;
+            var r = new Vector3[n];
+            for (var i = 0; i < n; i++)
+            {
+                r[i] = Vector3.Normalize(normals[i]);
+            }
+            return r;
+        }
+    }
+
     public int[] Faces => faces.ToArray();
 
     readonly int nx;
