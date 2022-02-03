@@ -5,7 +5,7 @@ using System.IO;
 /// <summary>
 /// A triangle mesh with normals.
 /// </summary>
-public class Mesh
+public class Mesh : IVolume
 {
     public Vector3[] Vertices { get; }
     public Vector3[] Normals { get; }
