@@ -1,8 +1,37 @@
 namespace SdfKit;
 
-public static class Volume
+public class Volume
 {
-    public static float[,,] SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz)
+    public readonly float[,,] Values;
+    public int NX => Values.GetLength(0);
+    public int NY => Values.GetLength(1);
+    public int NZ => Values.GetLength(2);
+
+    public readonly Vector3 Min;
+    public readonly Vector3 Max;
+    public Vector3 Center => (Min + Max) * 0.5f;
+    public Vector3 Size => Max - Min;
+    public float Radius => (Max - Min).Length() * 0.5f;
+
+    public Volume(float[,,] values, Vector3 min, Vector3 max)
+    {
+        Values = values;
+        Min = min;
+        Max = max;
+    }
+
+    public Volume(Vector3 min, Vector3 max, int nx, int ny, int nz)
+        : this(new float[Math.Max(1, nx), Math.Max(1, ny), Math.Max(1, nz)], min, max)
+    {
+    }
+
+    public float this[int x, int y, int z]
+    {
+        get => Values[x, y, z];
+        set => Values[x, y, z] = value;
+    }
+
+    public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz)
     {
         var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
         Vector3 p = min;
@@ -19,10 +48,10 @@ public static class Volume
                 }
             }
         }
-        return volume;
+        return new Volume (volume, min, max);
     }
 
-    public static float[,,] SampleSdfBatches(Action<Vector3[], float[], int> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = 2*1024, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdfBatches(Action<Vector3[], float[], int> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = 2*1024, int maxDegreeOfParallelism = -1)
     {
         var volume = CreateSamplingVolume(ref min, max, ref nx, ref ny, ref nz, out var dx, out var dy, out var dz);
         var ntotal = nx * ny * nz;
@@ -64,7 +93,7 @@ public static class Volume
         }, x => {
             // No cleanup needed
         });
-        return volume;
+        return new Volume (volume, min, max);
     }
 
     public static float[,,] SampleSdfZPlanes(Action<Vector3[], float[]> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int maxDegreeOfParallelism = -1)
@@ -138,7 +167,7 @@ public static class Volume
         return new float[nx, ny, nz];
     }
 
-    public static float[,,] SampleSphere(float r, Vector3 min, Vector3 max, int nx, int ny, int nz)
+    public static Volume SampleSphere(float r, Vector3 min, Vector3 max, int nx, int ny, int nz)
     {
         var sdf = (Vector3[] ps, float[] ds, int n) => {
             for (var i = 0; i < n; ++i)
@@ -153,7 +182,7 @@ public static class Volume
             nx, ny, nz);
     }
 
-    public static float[,,] SampleSphere(float r, float padding, int nx, int ny, int nz)
+    public static Volume SampleSphere(float r, float padding, int nx, int ny, int nz)
     {
         var min = new Vector3(-r - padding, -r - padding, -r - padding);
         var max = new Vector3(r + padding, r + padding, r + padding);

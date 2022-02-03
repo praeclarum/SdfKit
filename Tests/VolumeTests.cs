@@ -8,7 +8,23 @@ public class VolumeTests
     }
 
     [Test]
-    public void Zeros()
+    public void Empty()
+    {
+        var sdf = (Vector3 p) => 0.0f;
+        var v = new Volume(
+            new Vector3(-1, -1, -1),
+            new Vector3(1, 1, 1),
+            5, 7, 11);
+        Assert.AreEqual(5, v.NX);
+        Assert.AreEqual(7, v.NY);
+        Assert.AreEqual(11, v.NZ);
+        Assert.AreEqual(2f, v.Size.X, 1e-6f);
+        Assert.AreEqual(2f, v.Size.Y, 1e-6f);
+        Assert.AreEqual(2f, v.Size.Z, 1e-6f);
+    }
+
+    [Test]
+    public void ZeroSdf()
     {
         var sdf = (Vector3 p) => 0.0f;
         var v = Volume.SampleSdf(
@@ -16,9 +32,9 @@ public class VolumeTests
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             5, 7, 11);
-        Assert.AreEqual(5, v.GetLength(0));
-        Assert.AreEqual(7, v.GetLength(1));
-        Assert.AreEqual(11, v.GetLength(2));
+        Assert.AreEqual(5, v.NX);
+        Assert.AreEqual(7, v.NY);
+        Assert.AreEqual(11, v.NZ);
     }
 
     [Test]
@@ -36,9 +52,9 @@ public class VolumeTests
             new Vector3(1, 1, 1),
             1, 1, 1);
         Assert.AreEqual(1.0f, v[0,0,0]);
-        Assert.AreEqual(1, v.GetLength(0));
-        Assert.AreEqual(1, v.GetLength(1));
-        Assert.AreEqual(1, v.GetLength(2));
+        Assert.AreEqual(1, v.NX);
+        Assert.AreEqual(1, v.NY);
+        Assert.AreEqual(1, v.NZ);
     }
 
     [Test]
@@ -55,9 +71,9 @@ public class VolumeTests
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             2, 2, 2);
-        Assert.AreEqual(2, v.GetLength(0));
-        Assert.AreEqual(2, v.GetLength(1));
-        Assert.AreEqual(2, v.GetLength(2));
+        Assert.AreEqual(2, v.NX);
+        Assert.AreEqual(2, v.NY);
+        Assert.AreEqual(2, v.NZ);
     }
 
     [Test]
@@ -76,9 +92,9 @@ public class VolumeTests
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             3, 3, 3);
-        Assert.AreEqual(3, v.GetLength(0));
-        Assert.AreEqual(3, v.GetLength(1));
-        Assert.AreEqual(3, v.GetLength(2));
+        Assert.AreEqual(3, v.NX);
+        Assert.AreEqual(3, v.NY);
+        Assert.AreEqual(3, v.NZ);
         Assert.IsTrue(hasCenter);
     }
 

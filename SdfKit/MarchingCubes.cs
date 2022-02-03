@@ -33,11 +33,12 @@ public static class MarchingCubes
 {
     const double FLT_EPSILON = 0.0000001;
 
-    public static Mesh CreateMesh(float[,,] volume, float isovalue, int st, IProgress<float>? progress = null)
+    public static Mesh CreateMesh(Volume volume, float isovalue = 0.0f, int st = 1, IProgress<float>? progress = null)
     {
-        int nx = volume.GetLength(0);
-        int ny = volume.GetLength(1);
-        int nz = volume.GetLength(2);
+        int nx = volume.NX;
+        int ny = volume.NY;
+        int nz = volume.NZ;
+        var values = volume.Values;
 
         var cell = new Cell(nx, ny, nz);
 
@@ -62,8 +63,8 @@ public static class MarchingCubes
                     x += st;
                     var x_st = x + st;
                     cell.SetCube(isovalue, x, y, z, st,
-                        volume[x, y, z   ], volume[x_st, y, z   ], volume[x_st, y_st, z   ], volume[x, y_st, z   ],
-                        volume[x, y, z_st], volume[x_st, y, z_st], volume[x_st, y_st, z_st], volume[x, y_st, z_st]);
+                        values[x, y, z   ], values[x_st, y, z   ], values[x_st, y_st, z   ], values[x, y_st, z   ],
+                        values[x, y, z_st], values[x_st, y, z_st], values[x_st, y_st, z_st], values[x, y_st, z_st]);
                     var cas = Luts.cases[cell.Index,  0];
                     if (cas > 0) {
                         var config = Luts.cases[cell.Index,  1];
@@ -74,7 +75,14 @@ public static class MarchingCubes
             progress?.Report((float)z / nz_bound);
         }
 
-        return new Mesh (cell.Vertices, cell.Normals, cell.Faces);
+        var mesh = new Mesh (cell.Vertices, cell.Normals, cell.Faces);
+        var size = volume.Size;
+        var transform =
+            Matrix4x4.CreateTranslation(-(nx-1)/2f, -(ny-1)/2f, -(nz-1)/2f) *
+            Matrix4x4.CreateScale(size.X/(nx-1), size.Y/(ny-1), size.Z/(nz-1)) *
+            Matrix4x4.CreateTranslation(volume.Center);
+        mesh.Transform(transform);
+        return mesh;
     }
 
     static void TheBigSwitch(Cell cell, int cas, int config)
