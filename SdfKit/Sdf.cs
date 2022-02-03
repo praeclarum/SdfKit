@@ -32,13 +32,6 @@ public abstract class Sdf : IVolume
         }
     }
 
-    public void Sample(Memory<float> pointFloats, Memory<float> distances, int batchSize = DefaultBatchSize)
-    {
-        Debug.Assert(sizeof(float)*3 == System.Runtime.InteropServices.Marshal.SizeOf(typeof(Vector3)));
-        var points = MemoryUtils.Cast<float, Vector3>(pointFloats);
-        Sample(points, distances, batchSize);
-    }
-
     public virtual Volume CreateVolume(int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         return Volume.SampleSdf(this, nx, ny, nz, batchSize, maxDegreeOfParallelism);

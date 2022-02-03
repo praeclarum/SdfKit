@@ -18,7 +18,31 @@ public class Raytracer
         this.sdf = sdf;
     }
 
+    /// <summary>
+    /// Renders the SDF to an RGB buffer.
+    /// </summary>
     public Vec3Data Render()
+    {
+        GetCameraRays(out var ro, out var rd);
+        using (ro)
+        using (rd) {
+            return Render(ro, rd);
+        }
+    }
+
+    /// <summary>
+    /// Renders the SDF to a depth buffer.
+    /// </summary>
+    public FloatData RenderDepth()
+    {
+        GetCameraRays(out var ro, out var rd);
+        using (ro)
+        using (rd) {
+            return RenderDepth(ro, rd);
+        }
+    }
+
+    void GetCameraRays(out Vec3Data ro, out Vec3Data rd)
     {
         using var fragCoord = NewVec2();
         var fragCoordV = fragCoord.Values;
@@ -31,32 +55,52 @@ public class Raytracer
                 fragCoordV[i++] = y;
             }
         }
-        return Render(fragCoord);
+        using var uv = fragCoord / new Vector2(width-1, height-1);
+        uv.MultiplyInplace(2.0f);
+        uv.AddInplace(-1.0f);
+        ro = Vec3(0, 0, 5);
+        using var nearPlane = Vec3(uv, -3);
+        rd = Normalize(nearPlane);
     }
 
     /// <summary>
-    /// Renders the SDF to a bitmap. Returns a color for every pixel in fragCoord.
+    /// Returns a color for every pixel in fragCoord.
     /// </summary>
-    Vec3Data Render(Vec2Data fragCoord)
+    Vec3Data Render(Vec3Data ro, Vec3Data rd)
     {
-        using var uv = fragCoord / new Vector2(width-1, height-1) * 2.0f - 1.0f;
-        using var ro = Vec3(0, 0, 5);
-        using var nearPlane = Vec3(uv, -3);
-        using var rd = Normalize(nearPlane);
         using var t = Float(2.5f);
-        for (int i = 0; i < 3; i++) {
-            using var d = Map(ro + rd*t);
+        for (int i = 0; i < 10; i++) {
+            using var dp = rd*t;
+            dp.AddInplace(ro);
+            using var d = Map(dp);
             t.AddInplace(d);
         }
-        using var rp = ro + rd*t;
-        var fragColor = Vec3(1, 0, 0);
+        // using var bg = t > 9.0f;
+        // bg.MultiplyInplace(new Vector3(0.5f, 0.75f, 1.0f));
+        var rp = ro + rd*t;
+        var fragColor = rp;
         return fragColor;
+    }
+
+    /// <summary>
+    /// Returns a depth for every ray.
+    /// </summary>
+    FloatData RenderDepth(Vec3Data ro, Vec3Data rd)
+    {
+        var depth = Float(2.5f);
+        for (int i = 0; i < 10; i++) {
+            using var dp = rd*depth;
+            dp.AddInplace(ro);
+            using var d = Map(dp);
+            depth.AddInplace(d);
+        }
+        return depth;
     }
 
     FloatData Map(Vec3Data p)
     {
         var distances = NewFloat();
-        sdf.Sample(p.ValuesMemory, distances.ValuesMemory);
+        sdf.Sample(p.Vector3Memory, distances.FloatMemory);
         return distances;
     }
 
@@ -124,7 +168,7 @@ public class Raytracer
         public readonly ArrayPool<float> Pool;
         bool returned;
 
-        public Memory<float> ValuesMemory => Values.AsMemory(0, Length);
+        public Memory<float> FloatMemory => Values.AsMemory(0, Length);
 
         public FrameData(int width, int height, int dim, ArrayPool<float> pool)
         {
@@ -197,6 +241,8 @@ public class Raytracer
     }
     public class FloatData : FrameData
     {
+        public float this[int x, int y] => Values[y*Width + x];
+
         public FloatData(int width, int height, ArrayPool<float> pool) 
             : base(width, height, 1, pool)
         {
@@ -207,6 +253,8 @@ public class Raytracer
     }
     public class Vec2Data : FrameData
     {
+        public Memory<Vector2> Vector2Memory => MemoryUtils.Cast<float, Vector2>(FloatMemory);
+
         public Vec2Data(int width, int height, ArrayPool<float> pool) 
             : base(width, height, 2, pool)
         {
@@ -298,6 +346,8 @@ public class Raytracer
     }
     public class Vec3Data : FrameData
     {
+        public Memory<Vector3> Vector3Memory => MemoryUtils.Cast<float, Vector3>(FloatMemory);
+
         public Vec3Data(int width, int height, ArrayPool<float> pool) 
             : base(width, height, 3, pool)
         {
@@ -314,6 +364,7 @@ public class Raytracer
             data.GenericAddInplace(b);
             return data;
         }
+        public void AddInplace(Vec3Data other) => GenericAddInplace(other);
         public static Vec3Data operator *(Vec3Data a, FloatData b)
         {
             var data = new Vec3Data(a);
