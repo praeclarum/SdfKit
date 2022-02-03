@@ -11,7 +11,7 @@
 
 namespace SdfKit;
 
-public static class Luts {
+static class Luts {
 /*
 # Map an edge-index to two relative pixel positions. The ege index
 # represents a point that lies somewhere in between these pixels.

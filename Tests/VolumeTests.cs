@@ -125,33 +125,13 @@ public class VolumeTests
     }
 
     [Test]
-    public void SphereWidthSdfPlanes()
-    {
-        var r = 0.5f;
-        var sdf = (Vector3[] ps, float[] ds) => {
-            var n = ps.Length;
-            for (var i = 0; i < n; ++i)
-            {
-                ds[i] = ps[i].Length() - r;
-            }
-        };
-        var v = Volume.SampleSdfZPlanes(
-            sdf,
-            new Vector3(-1, -1, -1),
-            new Vector3(1, 1, 1),
-            5, 5, 5,
-            maxDegreeOfParallelism: 2);
-        Assert.AreEqual(-0.5f, v[2, 2, 2], 1.0e-3f);
-    }
-
-    [Test]
-    public void SphereWidthSdfBatch()
+    public void SphereWithBatchSize()
     {
         var r = 0.5f;
         var sdf = (Vector3[] ps, float[] ds, int n) => {
             // Console.WriteLine($"Thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}, N = {n}");
-            // if (n != 36)
-            //     Assert.AreEqual(70, n);
+            if (n != 22)
+                Assert.AreEqual(70, n);
             for (var i = 0; i < n; ++i)
             {
                 ds[i] = ps[i].Length() - r;
@@ -159,13 +139,14 @@ public class VolumeTests
         };
         var sw = new Stopwatch();
         sw.Start();
-        var v = Volume.SampleSdfBatches(
+        var v = Volume.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
-            256, 256, 256);
+            128, 128, 128,
+            batchSize: 70);
         sw.Stop();
         Console.WriteLine($"Elapsed: {sw.ElapsedMilliseconds} ms");
-        Assert.AreEqual(-0.5f, v[127, 127, 127], 1.0e-2f);
+        Assert.AreEqual(-0.5f, v[63, 63, 63], 2.0e-2f);
     }
 }

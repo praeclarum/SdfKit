@@ -33,7 +33,7 @@ public static class MarchingCubes
 {
     const double FLT_EPSILON = 0.0000001;
 
-    public static Mesh CreateMesh(Volume volume, float isovalue = 0.0f, int st = 1, IProgress<float>? progress = null)
+    public static Mesh CreateMesh(Volume volume, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
     {
         int nx = volume.NX;
         int ny = volume.NY;
@@ -42,27 +42,27 @@ public static class MarchingCubes
 
         var cell = new Cell(nx, ny, nz);
 
-        var nx_bound = nx - 2*st;
-        var ny_bound = ny - 2*st;
-        var nz_bound = nz - 2*st;
+        var nx_bound = nx - 2*step;
+        var ny_bound = ny - 2*step;
+        var nz_bound = nz - 2*step;
 
-        int z = -st;
+        int z = -step;
         while (z < nz_bound)
         {
-            z += st;
-            var z_st = z + st;
+            z += step;
+            var z_st = z + step;
             cell.NewZValue ();
-            int y = -st;
+            int y = -step;
             while (y < ny_bound)
             {
-                y += st;
-                var y_st = y + st;
-                int x = -st;
+                y += step;
+                var y_st = y + step;
+                int x = -step;
                 while (x < nx_bound)
                 {
-                    x += st;
-                    var x_st = x + st;
-                    cell.SetCube(isovalue, x, y, z, st,
+                    x += step;
+                    var x_st = x + step;
+                    cell.SetCube(isoValue, x, y, z, step,
                         values[x, y, z   ], values[x_st, y, z   ], values[x_st, y_st, z   ], values[x, y_st, z   ],
                         values[x, y, z_st], values[x_st, y, z_st], values[x_st, y_st, z_st], values[x, y_st, z_st]);
                     var cas = Luts.cases[cell.Index,  0];
