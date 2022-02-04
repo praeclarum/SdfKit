@@ -47,6 +47,23 @@ public class MarchingCubesTests
     }
 
     [Test]
+    public void Cylinder10()
+    {
+        var n = 1024;
+        var sw = new Stopwatch();
+        sw.Start();
+        var volume = Volume.SampleSdf(Sdf.Cylinder(1, 3, 2.0f), n, n, n);
+        sw.Stop();
+        Console.WriteLine($"SampleSdf: {sw.ElapsedMilliseconds}ms");
+        Assert.AreEqual(n, volume.NX);
+        // var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
+        // mesh.WriteObj("Cylinder10.obj");
+        // Assert.AreEqual(60, mesh.Vertices.Length);
+        // Assert.AreEqual(mesh.Center.Length(), 2.0f, 1e-6f);
+        // Assert.AreEqual(r, mesh.Size.X/2f, 1e-1f);
+    }
+
+    [Test]
     public void Sphere128Progress()
     {
         var r = 3f;

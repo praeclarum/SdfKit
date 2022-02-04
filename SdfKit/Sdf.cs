@@ -104,46 +104,47 @@ public abstract class Sdf : IVolume
         // }, min, max);
     }
 
-    static readonly System.Reflection.PropertyInfo GetFloatSpanFromMemory = typeof(Memory<float>).GetProperty(nameof(Memory<float>.Span));
-    static readonly System.Reflection.PropertyInfo GetVector3SpanFromMemory = typeof(Memory<Vector3>).GetProperty(nameof(Memory<Vector3>.Span));
-    static readonly System.Reflection.MethodInfo PinFloatMemory = typeof(Memory<float>).GetMethod(nameof(Memory<float>.Pin));
-    static readonly System.Reflection.MethodInfo PinVector3Memory = typeof(Memory<Vector3>).GetMethod(nameof(Memory<Vector3>.Pin));
-    static readonly System.Reflection.MethodInfo DisposeMemoryHandle = typeof(System.Buffers.MemoryHandle).GetMethod(nameof(System.Buffers.MemoryHandle.Dispose));
-    static readonly System.Reflection.PropertyInfo GetPointerFromMemoryHandle = typeof(System.Buffers.MemoryHandle).GetProperty(nameof(System.Buffers.MemoryHandle.Pointer));
+    static readonly System.Reflection.PropertyInfo SpanOfFloatMemory = typeof(Memory<float>).GetProperty(nameof(Memory<float>.Span));
+    static readonly System.Reflection.PropertyInfo LengthOfFloatMemory = typeof(Memory<float>).GetProperty(nameof(Memory<float>.Length));
+    static readonly System.Reflection.PropertyInfo SpanOfVector3Memory = typeof(Memory<Vector3>).GetProperty(nameof(Memory<Vector3>.Span));
 
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    public static T SpanGetItem<T>(Span<T> span, int index) => span[index];
+    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+    public static T SpanSetItem<T>(Span<T> span, int index, T value) => span[index] = value;
+    static readonly System.Reflection.MethodInfo SpanFloatGetter = typeof(Sdf).GetMethod(nameof(Sdf.SpanGetItem)).MakeGenericMethod(typeof(float));
+    static readonly System.Reflection.MethodInfo SpanFloatSetter = typeof(Sdf).GetMethod(nameof(Sdf.SpanSetItem)).MakeGenericMethod(typeof(float));
+    static readonly System.Reflection.MethodInfo SpanVector3Getter = typeof(Sdf).GetMethod(nameof(Sdf.SpanGetItem)).MakeGenericMethod(typeof(Vector3));
     static SdfAction CompileSdfExpression(Expression<SdfDelegate> expression)
     {
-        var ps = Expression.Parameter(typeof(Memory<Vector3>), "ps");
-        var ds = Expression.Parameter(typeof(Memory<float>), "ds");
-        var p = Expression.Variable(typeof(System.Buffers.MemoryHandle), "p");
-        var d = Expression.Variable(typeof(System.Buffers.MemoryHandle), "d");
-        var pp = Expression.Variable(typeof(Vector3*), "pp");
-        var dp = Expression.Variable(typeof(float*), "dp");
+        var pm = Expression.Parameter(typeof(Memory<Vector3>), "pm");
+        var dm = Expression.Parameter(typeof(Memory<float>), "dm");
+        var ps = Expression.Variable(typeof(Span<Vector3>), "ps");
+        var ds = Expression.Variable(typeof(Span<float>), "ds");
+        var p = Expression.Variable(typeof(Vector3), "p");
         var i = Expression.Variable(typeof(int), "i");
         var n = Expression.Variable(typeof(int), "n");
         var init = Expression.Block(
-            Expression.Assign(p, Expression.Call(ps, PinVector3Memory)),
-            Expression.Assign(d, Expression.Call(ds, PinFloatMemory)),
+            Expression.Assign(ps, Expression.Property(pm, SpanOfVector3Memory)),
+            Expression.Assign(ds, Expression.Property(dm, SpanOfFloatMemory)),
+            Expression.Assign(n, Expression.Property(dm, LengthOfFloatMemory)),
             Expression.Assign(i, Expression.Constant(0)));
-        var deinit = Expression.Block(
-            Expression.Call(p, DisposeMemoryHandle),
-            Expression.Call(d, DisposeMemoryHandle));
         var loopLabel = Expression.Label("loop");
         var loop = Expression.Loop(
             Expression.IfThenElse(
                 Expression.LessThan(i, n),
                 Expression.Block(
-                    // Expression.Assign(Expression.ArrayAccess(p, i), Expression.ArrayAccess(p, i)),
-                    // Expression.Assign(Expression.ArrayAccess(d, i), expression.Body),
+                    Expression.Assign(p, Expression.Call(SpanVector3Getter, ps, i)),
+                    Expression.Call(SpanFloatSetter, ds, i, 
+                        Expression.Invoke(expression, p)),
                     Expression.PostIncrementAssign(i)),
                 Expression.Break(loopLabel)),
             loopLabel);
         var body = Expression.Block(
-            new[] { p, d, pp, dp, i, n },
+            new[] { ps, ds, p, i, n },
             init,
-            loop,
-            deinit);
-        var lambda = Expression.Lambda<SdfAction>(body, ps, ds);
+            loop);
+        var lambda = Expression.Lambda<SdfAction>(body, pm, dm);
         return lambda.Compile();
     }
 
