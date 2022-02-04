@@ -1,5 +1,7 @@
 using System.Buffers;
 
+using static SdfKit.VectorOps;
+
 namespace SdfKit;
 
 public class Raytracer
@@ -50,6 +52,21 @@ public class Raytracer
         }
     }
 
+    /// <summary>
+    /// Returns a depth for every ray.
+    /// </summary>
+    FloatData RenderDepth(Vec3Data ro, Vec3Data rd)
+    {
+        var depth = Float(ZNear - 0.1f);
+        for (int i = 0; i < DepthIterations; i++) {
+            using var dp = rd*depth;
+            dp.AddInplace(ro);
+            using var d = Map(dp);
+            depth.AddInplace(d);
+        }
+        return depth;
+    }
+
     void GetCameraRays(out Vec3Data ro, out Vec3Data rd)
     {
         using var uv = NewVec2();
@@ -88,9 +105,10 @@ public class Raytracer
             using var d = Map(dp);
             t.AddInplace(d);
         }
+        var rp = ro + rd*t;
+        var n = DistGrad(rp).NormalizeInplace();
         using var bgmask = t > 9.0f;
         using var bg = bgmask * new Vector3(0.5f, 0.75f, 1.0f);
-        var rp = ro + rd*t;
         var diff = new Vector3(1.0f, 0.5f, 0.25f);
         bgmask.NotInplace();
         using var fg = bgmask * diff;
@@ -98,19 +116,48 @@ public class Raytracer
         return fragColor;
     }
 
-    /// <summary>
-    /// Returns a depth for every ray.
-    /// </summary>
-    FloatData RenderDepth(Vec3Data ro, Vec3Data rd)
+    const float GradOffset = 1e-4f;
+
+    static readonly Vector3[] GradOffsets = {
+        GradOffset * Vector3.UnitX,
+        GradOffset * Vector3.UnitY,
+        GradOffset * Vector3.UnitZ,
+        -GradOffset * Vector3.UnitX,
+        -GradOffset * Vector3.UnitY,
+        -GradOffset * Vector3.UnitZ,
+    };
+
+    Vec3Data DistGrad(Vec3Data p)
     {
-        var depth = Float(ZNear - 0.1f);
-        for (int i = 0; i < DepthIterations; i++) {
-            using var dp = rd*depth;
-            dp.AddInplace(ro);
-            using var d = Map(dp);
-            depth.AddInplace(d);
+        FloatData? px = null, py = null, pz = null;
+        FloatData? nx = null, ny = null, nz = null;
+        
+        Parallel.ForEach(GradOffsets, (o, s, i) => {
+            // Console.WriteLine($"{i} = {o}");
+            using var op = p + o;
+            var d = Map(op);
+            switch (i) {
+                case 0: px = d; break;
+                case 1: py = d; break;
+                case 2: pz = d; break;
+                case 3: nx = d; break;
+                case 4: ny = d; break;
+                case 5: nz = d; break;
+            }
+        });
+        if (px is null || py is null || pz is null) {
+            throw new System.Exception("px, py, pz are null");
         }
-        return depth;
+        if (nx is null || ny is null || nz is null) {
+            throw new System.Exception("nx, ny, nz are null");
+        }
+        using (px) using (py) using (pz)
+        using (nx) using (ny) using (nz) {
+            using var pp = Vec3(px, py, pz);
+            using var np = Vec3(nx, ny, nz);
+            return pp - np;
+        }
+        throw new NotImplementedException ();
     }
 
     FloatData Map(Vec3Data p)
@@ -156,20 +203,19 @@ public class Raytracer
         }
         return data;
     }
-    Vec3Data Normalize(Vec3Data xyz)
+    Vec3Data Vec3(FloatData x, FloatData y, FloatData z)
     {
         var data = NewVec3();
         var v = data.Values;
-        var bv = xyz.Values;
+        var bx = x.Values;
+        var by = y.Values;
+        var bz = z.Values;
         var n = data.Length;
-        for (int i = 0; i < n; i += 3) {
-            var x = bv[i];
-            var y = bv[i+1];
-            var z = bv[i+2];
-            var r = 1.0f / MathF.Sqrt(x*x + y*y + z*z);
-            v[i] = x*r;
-            v[i+1] = y*r;
-            v[i+2] = z*r;
+        for (int i = 0, j = 0; i < n; ) {
+            v[i++] = bx[j];
+            v[i++] = by[j];
+            v[i++] = bz[j];
+            j++;
         }
         return data;
     }

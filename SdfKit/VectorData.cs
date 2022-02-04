@@ -36,59 +36,76 @@ public class VectorData : IDisposable
             returned = true;
         }
     }
-    public void AddInplace(float other)
+    public VectorData AddInplace(float other)
     {
         var n = Length;
         for (int i = 0; i < n; i++) {
             Values[i] += other;
         }
+        return this;
     }
-    public void SubtractInplace(float other)
+    public VectorData SubtractInplace(float other)
     {
         var n = Length;
         for (int i = 0; i < n; i++) {
             Values[i] -= other;
         }
+        return this;
     }
-    public void MultiplyInplace(float other)
+    public VectorData MultiplyInplace(float other)
     {
         var n = Length;
         for (int i = 0; i < n; i++) {
             Values[i] *= other;
         }
+        return this;
     }
-    public void DivideInplace(float other)
+    public VectorData DivideInplace(float other)
     {
         var n = Length;
         for (int i = 0; i < n; i++) {
             Values[i] /= other;
         }
+        return this;
     }
 
-    protected void GenericAddInplace(VectorData other)
+    protected VectorData GenericAddInplace(VectorData other)
     {
         var n = Length;
         Debug.Assert(Length == other.Length);
         for (int i = 0; i < n; i++) {
             Values[i] += other.Values[i];
         }
+        return this;
     }
 
-    protected void GenericMultiplyInplace(VectorData other)
+    protected VectorData GenericMultiplyInplace(VectorData other)
     {
         var n = Length;
         Debug.Assert(Length == other.Length);
         for (int i = 0; i < n; i++) {
             Values[i] *= other.Values[i];
         }
+        return this;
     }
 
-    protected void GenericNotInplace()
+    protected VectorData GenericNotInplace()
     {
         var n = Length;
         for (int i = 0; i < n; i++) {
             Values[i] = Values[i] == 0.0f ? 1.0f : 0.0f;
         }
+        return this;
+    }
+
+    protected VectorData GenericSubtractInplace(VectorData other)
+    {
+        var n = Length;
+        Debug.Assert(Length == other.Length);
+        for (int i = 0; i < n; i++) {
+            Values[i] -= other.Values[i];
+        }
+        return this;
     }
 }
 
@@ -285,26 +302,54 @@ public class Vec3Data : VectorData
         : base(width, height, 3, pool)
     {
     }
+
     public Vec3Data(Vec3Data other)
         : base(other.Width, other.Height, other.Dimensions, other.Pool)
     {
         Buffer.BlockCopy(other.Values, 0, Values, 0, Length * sizeof(float));
     }
 
+    public Vec3Data Clone()
+    {
+        return new Vec3Data(this);
+    }
+
     public static Vec3Data operator +(Vec3Data a, Vec3Data b)
     {
         var data = new Vec3Data(a);
-        data.GenericAddInplace(b);
+        data.AddInplace(b);
         return data;
     }
-    public void AddInplace(Vec3Data other) => GenericAddInplace(other);
+
+    public static Vec3Data operator +(Vec3Data a, Vector3 b)
+    {
+        var data = new Vec3Data(a);
+        data.AddInplace(b);
+        return data;
+    }
+
+    public Vec3Data AddInplace(Vec3Data other) =>
+        (Vec3Data)GenericAddInplace(other);
+
+    public Vec3Data AddInplace(Vector3 b)
+    {
+        var n = Length;
+        for (int i = 0; i < n; i += 3) {
+            Values[i] += b.X;
+            Values[i+0] += b.Y;
+            Values[i+1] += b.Z;
+        }
+        return this;
+    }
+
     public static Vec3Data operator *(Vec3Data a, FloatData b)
     {
         var data = new Vec3Data(a);
         data.MultiplyInplace(b);
         return data;
     }
-    public void MultiplyInplace(FloatData other)
+
+    public Vec3Data MultiplyInplace(FloatData other)
     {
         var n = Length;
         Debug.Assert(Length == 3*other.Length);
@@ -315,6 +360,59 @@ public class Vec3Data : VectorData
             Values[i++] *= x;
             Values[i++] *= x;
         }
+        return this;
+    }
+
+    public Vec3Data NormalizeInplace()
+    {
+        var v = Values;
+        var n = Length;
+        for (int i = 0; i < n;) {
+            var x = v[i];
+            var y = v[i+1];
+            var z = v[i+2];
+            var len = MathF.Sqrt(x*x + y*y + z*z);
+            if (len > 0) {
+                var r = 1.0f / len;
+                v[i++] = x*r;
+                v[i++] = y*r;
+                v[i++] = z*r;
+            }
+            else {
+                v[i++] = 0;
+                v[i++] = 0;
+                v[i++] = 0;
+            }
+        }
+        return this;
+    }
+
+    public static Vec3Data operator -(Vec3Data a, Vec3Data b)
+    {
+        var data = new Vec3Data(a);
+        data.SubtractInplace(b);
+        return data;
+    }
+
+    public static Vec3Data operator -(Vec3Data a, Vector3 b)
+    {
+        var data = new Vec3Data(a);
+        data.SubtractInplace(b);
+        return data;
+    }
+
+    public Vec3Data SubtractInplace(Vec3Data other) =>
+        (Vec3Data)GenericSubtractInplace(other);
+
+    public Vec3Data SubtractInplace(Vector3 b)
+    {
+        var n = Length;
+        for (int i = 0; i < n; i += 3) {
+            Values[i] -= b.X;
+            Values[i+0] -= b.Y;
+            Values[i+1] -= b.Z;
+        }
+        return this;
     }
 
     public void SaveRgbTga(string path)
@@ -361,5 +459,15 @@ public class Vec3Data : VectorData
                 }
             }
         }
+    }
+}
+
+public static class VectorOps
+{
+    public static Vec3Data Normalize(Vec3Data xyz)
+    {
+        var data = xyz.Clone();
+        data.NormalizeInplace();
+        return data;
     }
 }
