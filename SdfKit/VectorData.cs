@@ -82,6 +82,14 @@ public class VectorData : IDisposable
             Values[i] *= other.Values[i];
         }
     }
+
+    protected void GenericNotInplace()
+    {
+        var n = Length;
+        for (int i = 0; i < n; i++) {
+            Values[i] = Values[i] == 0.0f ? 1.0f : 0.0f;
+        }
+    }
 }
 
 public class FloatData : VectorData
@@ -95,8 +103,47 @@ public class FloatData : VectorData
 
     public void AddInplace(FloatData other) => GenericAddInplace(other);
     public void MultiplyInplace(FloatData other) => GenericMultiplyInplace(other);
+    public void NotInplace() => GenericNotInplace();
 
-    public void SaveTga(string path, float near, float far)
+    public static FloatData operator >(FloatData a, float b)
+    {
+        var data = new FloatData(a.Width, a.Height, a.Pool);
+        var v = data.Values;
+        var av = a.Values;
+        var n = data.Length;
+        for (int i = 0; i < n; i++) {
+            v[i] = av[i] > b ? 1 : 0;
+        }
+        return data;
+    }
+
+    public static FloatData operator <(FloatData a, float b)
+    {
+        var data = new FloatData(a.Width, a.Height, a.Pool);
+        var v = data.Values;
+        var av = a.Values;
+        var n = data.Length;
+        for (int i = 0; i < n; i++) {
+            v[i] = av[i] < b ? 1 : 0;
+        }
+        return data;
+    }
+
+    public static Vec3Data operator *(FloatData a, Vector3 b)
+    {
+        var data = new Vec3Data(a.Width, a.Height, a.Pool);
+        var v = data.Values;
+        var av = a.Values;
+        var n = a.Length;
+        for (int i = 0, j = 0; i < n; i++) {
+            v[j++] = av[i] * b.X;
+            v[j++] = av[i] * b.Y;
+            v[j++] = av[i] * b.Z;
+        }
+        return data;
+    }
+
+    public void SaveDepthTga(string path, float near, float far)
     {
         using var s = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read);
         using var w = new System.IO.BinaryWriter(s);
@@ -227,6 +274,13 @@ public class Vec3Data : VectorData
 {
     public Memory<Vector3> Vector3Memory => MemoryUtils.Cast<float, Vector3>(FloatMemory);
 
+    public Vector3 this[int x, int y] {
+        get {
+            var i = (y*Width + x)*3;
+            return new Vector3(Values[i], Values[i+1], Values[i+2]);
+        }
+    }
+
     public Vec3Data(int width, int height, ArrayPool<float> pool) 
         : base(width, height, 3, pool)
     {
@@ -260,6 +314,52 @@ public class Vec3Data : VectorData
             Values[i++] *= x;
             Values[i++] *= x;
             Values[i++] *= x;
+        }
+    }
+
+    public void SaveRgbTga(string path)
+    {
+        using var s = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read);
+        using var w = new System.IO.BinaryWriter(s);
+        w.Write((byte)0); // ID length
+        w.Write((byte)0); // Color map type
+        w.Write((byte)2); // Image type = uncompressed RGB
+        // Color map specification is 5 bytes
+        w.Write((ushort)0); // Color map origin
+        w.Write((ushort)0); // Color map length
+        w.Write((byte)0); // Color map entry size
+        // Image specification is 10 bytes
+        w.Write((ushort)0); // X origin
+        w.Write((ushort)0); // Y origin
+        w.Write((ushort)Width); // Width
+        w.Write((ushort)Height); // Height
+        w.Write((byte)24); // Bits per pixel
+        w.Write((byte)0); // Image descriptor
+        for (int y = 0; y < Height; y++) {
+            for (int x = 0; x < Width; x++) {
+                var v = this[x, y] * 255.0f;
+                if (v.Z <= 0.0f) {
+                    w.Write((byte)0);
+                } else if (v.Z >= 255.0f) {
+                    w.Write((byte)255);
+                } else {
+                    w.Write((byte)v.Z);
+                }
+                if (v.Y <= 0.0f) {
+                    w.Write((byte)0);
+                } else if (v.Y >= 255.0f) {
+                    w.Write((byte)255);
+                } else {
+                    w.Write((byte)v.Y);
+                }
+                if (v.X <= 0.0f) {
+                    w.Write((byte)0);
+                } else if (v.X >= 255.0f) {
+                    w.Write((byte)255);
+                } else {
+                    w.Write((byte)v.X);
+                }
+            }
         }
     }
 }

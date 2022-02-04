@@ -15,6 +15,8 @@ public class Raytracer
     public float ZNear { get; set; } = 3.0f;
     public float ZFar { get; set; } = 1e3f;
 
+    public int DepthIterations { get; set; } = 40;
+
     public Raytracer(int width, int height, Sdf sdf, int batchSize = Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         this.width = width;
@@ -80,16 +82,19 @@ public class Raytracer
     Vec3Data Render(Vec3Data ro, Vec3Data rd)
     {
         using var t = Float(ZNear - 0.1f);
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < DepthIterations; i++) {
             using var dp = rd*t;
             dp.AddInplace(ro);
             using var d = Map(dp);
             t.AddInplace(d);
         }
-        // using var bg = t > 9.0f;
-        // bg.MultiplyInplace(new Vector3(0.5f, 0.75f, 1.0f));
+        using var bgmask = t > 9.0f;
+        using var bg = bgmask * new Vector3(0.5f, 0.75f, 1.0f);
         var rp = ro + rd*t;
-        var fragColor = rp;
+        var diff = new Vector3(1.0f, 0.5f, 0.25f);
+        bgmask.NotInplace();
+        using var fg = bgmask * diff;
+        var fragColor = fg + bg;
         return fragColor;
     }
 
@@ -99,7 +104,7 @@ public class Raytracer
     FloatData RenderDepth(Vec3Data ro, Vec3Data rd)
     {
         var depth = Float(ZNear - 0.1f);
-        for (int i = 0; i < 40; i++) {
+        for (int i = 0; i < DepthIterations; i++) {
             using var dp = rd*depth;
             dp.AddInplace(ro);
             using var d = Map(dp);

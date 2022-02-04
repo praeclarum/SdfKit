@@ -20,7 +20,7 @@ public class RaytracerTests
         Assert.AreEqual(h, img.Height);
         Assert.AreEqual(4.0f, img[w/2, h/2], 1.0e-2f);
         Assert.Greater(img[0, 0], 9.0f);
-        img.SaveTga("SphereDepth_50x30.tga", 3, 10);
+        img.SaveDepthTga("SphereDepth_50x30.tga", 3, 10);
     }
 
     [Test]
@@ -36,7 +36,7 @@ public class RaytracerTests
         Assert.AreEqual(h, img.Height);
         Assert.AreEqual(4.0f, img[w/2, h/2], 1.0e-2f);
         Assert.Greater(img[0, 0], 9.0f);
-        img.SaveTga("BoxDepth_50x30.tga", 3, 10);
+        img.SaveDepthTga("BoxDepth_50x30.tga", 3, 10);
     }
 
     [Test]
@@ -52,7 +52,7 @@ public class RaytracerTests
             .ToSdf(-Vector3.One, Vector3.One);
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
-        img.SaveTga("CylinderDepth_50x30.tga", 3, 10);
+        img.SaveDepthTga("CylinderDepth_50x30.tga", 3, 10);
         Assert.AreEqual(w, img.Width);
         Assert.AreEqual(h, img.Height);
         Assert.AreEqual(5-r, img[w/2, h/2-2], 1.0e-1f);
@@ -72,7 +72,7 @@ public class RaytracerTests
         Assert.AreEqual(h, img.Height);
         Assert.AreEqual(5.0f, img[w/2, h/2], 1.0e-2f);
         Assert.Less(img[0, 0], 9.0f);
-        img.SaveTga("PlaneDepth_50x30.tga", 3, 10);
+        img.SaveDepthTga("PlaneDepth_50x30.tga", 3, 10);
     }
 
     [Test]
@@ -88,7 +88,23 @@ public class RaytracerTests
             .ToSdf(-Vector3.One, Vector3.One);
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
-        img.SaveTga("SphereRepeatDepth_50x30.tga", 3, 10);
+        img.SaveDepthTga("SphereRepeatDepth_50x30.tga", 3, 10);
+    }
+
+    [Test]
+    public void SphereRepeat()
+    {
+        var w = 50;
+        var h = 30;
+        var r = 0.5f;
+        var sdf = 
+            Sdf
+            .SphereExpression(r)
+            .RepeatXY(2*r, 2*r)
+            .ToSdf(-Vector3.One, Vector3.One);
+        var rt = new Raytracer(w, h, sdf);
+        using var img = rt.Render();
+        img.SaveRgbTga($"SphereRepeat_{w}x{h}.tga");
     }
 
 }
