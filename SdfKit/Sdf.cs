@@ -84,7 +84,6 @@ public abstract class Sdf : IVolume
     static Expression<SdfDelegate> CylinderExpression(float r, float h) =>
         p => MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h);
 
-
     public static Sdf Cylinder(float radius, float height, float padding = 0.0f)
     {
         var min = new Vector3(-radius - padding, 0 - padding, -radius - padding);
