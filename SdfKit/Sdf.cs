@@ -5,7 +5,7 @@ namespace SdfKit;
 /// </summary>
 public abstract class Sdf : IVolume
 {
-    public const int DefaultBatchSize = 2*1024;
+    public const int DefaultBatchSize = 2 * 1024;
 
     public Vector3 Min { get; protected set; }
     public Vector3 Max { get; protected set; }
@@ -25,7 +25,8 @@ public abstract class Sdf : IVolume
     {
         var i = 0;
         var ntotal = distances.Length;
-        while (i < ntotal) {
+        while (i < ntotal)
+        {
             var n = Math.Min(batchSize, ntotal - i);
             SampleBatch(points.Slice(i, n), distances.Slice(i, n));
             i += n;
@@ -48,6 +49,66 @@ public abstract class Sdf : IVolume
         return new ActionSdf(sdf, min, max);
     }
 
+    static float VMax(Vector3 v)
+    {
+        return Math.Max(Math.Max(v.X, v.Y), v.Z);
+    }
+
+    public static Sdf Box(float bounds, float padding = 0.0f)
+    {
+        return Box(new Vector3(bounds, bounds, bounds), padding);
+    }
+
+    public static Sdf Box(Vector3 bounds, float padding = 0.0f)
+    {
+        var min = new Vector3(-bounds.X - padding, -bounds.Y - padding, -bounds.Z - padding);
+        var max = new Vector3(bounds.X + padding, bounds.Y + padding, bounds.Z + padding);
+        return Sdf.FromAction((ps, ds) =>
+        {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
+            for (var i = 0; i < n; ++i)
+            {
+                var wd = Vector3.Abs(p[i]) - bounds;
+                d[i] = Vector3.Max(wd, Vector3.Zero).Length() +
+                       VMax(Vector3.Min(wd, Vector3.Zero));
+            }
+        }, min, max);
+    }
+
+    public static Sdf Plane(Vector3 normal, float distanceFromOrigin, Vector3 min, Vector3 max)
+    {
+        return Sdf.FromAction((ps, ds) =>
+        {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
+            for (var i = 0; i < n; ++i)
+            {
+                d[i] = Vector3.Dot(p[i], normal) + distanceFromOrigin;
+            }
+        }, min, max);
+    }
+
+    public static Sdf PlaneXY(float zmin, float zmax, float xbound, float ybound, float padding = 0.0f)
+    {
+        return Plane(
+            new Vector3(0, 0, 1),
+            zmax,
+            new Vector3(-xbound - padding, -ybound - padding, zmin - padding),
+            new Vector3(xbound + padding, ybound + padding, zmax + padding));
+    }
+
+    public static Sdf PlaneXZ(float ymin, float ymax, float xbound, float zbound, float padding = 0.0f)
+    {
+        return Plane(
+            new Vector3(0, 1, 0),
+            ymax,
+            new Vector3(-xbound - padding, ymin - padding, -zbound - padding),
+            new Vector3(xbound + padding, ymax + padding, zbound + padding));
+    }
+
     public static Sdf Sphere(float radius, float padding = 0.0f)
     {
         var min = new Vector3(-radius - padding, -radius - padding, -radius - padding);
@@ -64,33 +125,6 @@ public abstract class Sdf : IVolume
         }, min, max);
     }
 
-    static float VMax(Vector3 v)
-    {
-        return Math.Max(Math.Max(v.X, v.Y), v.Z);
-    }
-
-    public static Sdf Box(float radius, float padding = 0.0f)
-    {
-        return Box(new Vector3(radius, radius, radius), padding);
-    }
-
-    public static Sdf Box(Vector3 radius, float padding = 0.0f)
-    {
-        var min = new Vector3(-radius.X - padding, -radius.Y - padding, -radius.Z - padding);
-        var max = new Vector3(radius.X + padding, radius.Y + padding, radius.Z + padding);
-        return Sdf.FromAction((ps, ds) =>
-        {
-            int n = ps.Length;
-            var p = ps.Span;
-            var d = ds.Span;
-            for (var i = 0; i < n; ++i)
-            {
-                var wd = Vector3.Abs(p[i]) - radius;
-                d[i] = Vector3.Max(wd, Vector3.Zero).Length() + 
-                       VMax(Vector3.Min(wd, Vector3.Zero));
-            }
-        }, min, max);
-    }
 }
 
 /// <summary>
