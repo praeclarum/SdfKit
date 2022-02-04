@@ -4,9 +4,11 @@ Tools for manipulating signed distance functions.
 
 Main features include:
 
-* Built-in library of combinable SDF primitive shapes and modifiers
-* Multi-threaded batched sampling of the SDF
-* Marching Cubes implementation to export your SDF as a solid mesh
+* `Sdfs` and `SdfExprs` library of combinable primitive shapes and modifiers.
+* Multi-threaded batched sampling of the `Sdf` for the perf perf perf.
+* A bounded `Volume` class for creating voxels from your `Sdf`.
+* `MarchingCubes` implementation to export your `Sdf` as a solid mesh.
+* `Raytracer` to create some sweet sweet 90s CGI of your `Sdf`.
 
 ## Creating SDFs
 
@@ -41,6 +43,10 @@ There are four ways to provide SDF data:
 4. **Use SDF Expressions to build the SDF** using the members of `SdfExprs`. This method makes it easy to build varied and efficient SDFs using a fluent syntax.
 
     ```csharp
-    Sdf spheres = SdfExprs.Sphere(1.0).RepeatXY(2.0);
+    Sdf spheres =
+        SdfExprs
+        .Sphere(1.0)
+        .RepeatXY(2.0)
+        .ToSdf();
     ```
 
