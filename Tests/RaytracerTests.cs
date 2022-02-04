@@ -7,7 +7,6 @@ public class RaytracerTests
     {
     }
 
-
     [Test]
     public void SphereDepth()
     {
