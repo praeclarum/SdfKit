@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-
+using SdfAction = System.Action<System.Memory<System.Numerics.Vector3>, System.Memory<float>>;
 namespace SdfKit;
 
 /// <summary>
@@ -79,24 +79,61 @@ public abstract class Sdf : IVolume
         }, min, max);
     }
 
-    delegate float SampleFunc(Vector3 p);
-    Expression<SampleFunc> CylinderFunction(float r, float h) => (p) => MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h);
+    delegate float SdfDelegate(Vector3 p);
+
+    static Expression<SdfDelegate> CylinderExpression(float r, float h) =>
+        p => MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h);
+
+    static readonly System.Reflection.PropertyInfo GetFloatSpanFromMemory = typeof(Memory<float>).GetProperty(nameof(Memory<float>.Span));
+    static readonly System.Reflection.PropertyInfo GetVector3SpanFromMemory = typeof(Memory<Vector3>).GetProperty(nameof(Memory<Vector3>.Span));
 
     public static Sdf Cylinder(float radius, float height, float padding = 0.0f)
     {
         var min = new Vector3(-radius - padding, 0 - padding, -radius - padding);
         var max = new Vector3(radius + padding, height + padding, radius + padding);
-        return Sdf.FromAction((ps, ds) =>
-        {
-            int n = ps.Length;
-            var p = ps.Span;
-            var d = ds.Span;
-            for (var i = 0; i < n; ++i)
-            {
-                var wd = MathF.Sqrt(p[i].X * p[i].X + p[i].Z * p[i].Z) - radius;
-                d[i] = Math.Max(wd, MathF.Abs(p[i].Y) - height);
-            }
-        }, min, max);
+        SdfAction action = CompileSdfExpression(CylinderExpression(radius, height));
+        return Sdf.FromAction(action, min, max);
+        // return Sdf.FromAction((ps, ds) =>
+        // {
+        //     int n = ps.Length;
+        //     var p = ps.Span;
+        //     var d = ds.Span;
+        //     for (var i = 0; i < n; ++i)
+        //     {
+        //         var wd = MathF.Sqrt(p[i].X * p[i].X + p[i].Z * p[i].Z) - radius;
+        //         d[i] = Math.Max(wd, MathF.Abs(p[i].Y) - height);
+        //     }
+        // }, min, max);
+    }
+
+    static SdfAction CompileSdfExpression(Expression<SdfDelegate> expression)
+    {
+        var ps = Expression.Parameter(typeof(Memory<Vector3>), "ps");
+        var ds = Expression.Parameter(typeof(Memory<float>), "ds");
+        var p = Expression.Variable(typeof(Span<Vector3>), "p");
+        var d = Expression.Variable(typeof(Span<float>), "d");
+        var i = Expression.Variable(typeof(int), "i");
+        var n = Expression.Variable(typeof(int), "n");
+        var init = Expression.Block(
+            Expression.Assign(p, Expression.Property(ps, GetVector3SpanFromMemory)),
+            Expression.Assign(d, Expression.Property(ds, GetFloatSpanFromMemory)),
+            Expression.Assign(i, Expression.Constant(0)));
+        var loopLabel = Expression.Label("loop");
+        var loop = Expression.Loop(
+            Expression.IfThenElse(
+                Expression.LessThan(i, n),
+                Expression.Block(
+                    // Expression.Assign(Expression.ArrayAccess(p, i), Expression.ArrayAccess(p, i)),
+                    // Expression.Assign(Expression.ArrayAccess(d, i), expression.Body),
+                    Expression.PostIncrementAssign(i)),
+                Expression.Break(loopLabel)),
+            loopLabel);
+        var body = Expression.Block(
+            new[] { p, d, i, n },
+            init,
+            loop);
+        var lambda = Expression.Lambda<SdfAction>(body, ps, ds);
+        return lambda.Compile();
     }
 
     public static Sdf Plane(Vector3 normal, float distanceFromOrigin, Vector3 min, Vector3 max)
@@ -154,9 +191,9 @@ public abstract class Sdf : IVolume
 /// </summary>
 public class ActionSdf : Sdf
 {
-    Action<Memory<Vector3>, Memory<float>> sampleAction;
+    SdfAction sampleAction;
 
-    public ActionSdf(Action<Memory<Vector3>, Memory<float>> action, Vector3 min, Vector3 max)
+    public ActionSdf(SdfAction action, Vector3 min, Vector3 max)
         : base(min, max)
     {
         sampleAction = action;
