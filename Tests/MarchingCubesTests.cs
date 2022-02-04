@@ -52,7 +52,7 @@ public class MarchingCubesTests
         var n = 50;
         var sw = new Stopwatch();
         sw.Start();
-        var volume = Volume.SampleSdf(Sdf.Cylinder(1, 3, 0.0f), n, n, n);
+        var volume = Volume.SampleSdf(Sdf.Cylinder(1, 3), n, n, n);
         sw.Stop();
         // Console.WriteLine($"SampleSdf: {sw.ElapsedMilliseconds}ms");
         Assert.AreEqual(n, volume.NX);
