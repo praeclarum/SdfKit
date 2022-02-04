@@ -28,7 +28,7 @@ static class MemoryUtils
 
         protected override void Dispose(bool disposing) { }
         public override MemoryHandle Pin(int elementIndex = 0)
-            => throw new NotSupportedException();
+            => _from.Pin();
         public override void Unpin()
             => throw new NotSupportedException();
     }
