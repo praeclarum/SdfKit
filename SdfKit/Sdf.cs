@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace SdfKit;
 
 /// <summary>
@@ -73,6 +75,26 @@ public abstract class Sdf : IVolume
                 var wd = Vector3.Abs(p[i]) - bounds;
                 d[i] = Vector3.Max(wd, Vector3.Zero).Length() +
                        VMax(Vector3.Min(wd, Vector3.Zero));
+            }
+        }, min, max);
+    }
+
+    delegate float SampleFunc(Vector3 p);
+    Expression<SampleFunc> CylinderFunction(float r, float h) => (p) => MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h);
+
+    public static Sdf Cylinder(float radius, float height, float padding = 0.0f)
+    {
+        var min = new Vector3(-radius - padding, 0 - padding, -radius - padding);
+        var max = new Vector3(radius + padding, height + padding, radius + padding);
+        return Sdf.FromAction((ps, ds) =>
+        {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
+            for (var i = 0; i < n; ++i)
+            {
+                var wd = MathF.Sqrt(p[i].X * p[i].X + p[i].Z * p[i].Z) - radius;
+                d[i] = Math.Max(wd, MathF.Abs(p[i].Y) - height);
             }
         }, min, max);
     }
