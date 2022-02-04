@@ -3,7 +3,7 @@ namespace SdfKit;
 /// <summary>
 /// A regular 3D grid of distance values.
 /// </summary>
-public class Volume : IVolume
+public class Volume : IBoundedVolume
 {
     public readonly float[,,] Values;
     public int NX => Values.GetLength(0);
@@ -39,7 +39,7 @@ public class Volume : IVolume
         return MarchingCubes.CreateMesh(this, isoValue, step, progress);
     }
 
-    public void SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public void SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, int batchSize =SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var volume = Values;
         var nx = NX;
@@ -92,12 +92,12 @@ public class Volume : IVolume
         });
     }
 
-    public static Volume SampleSdf(Sdf sdf, int nx, int ny, int nz, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdf(Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        return SampleSdf(sdf.SampleBatch, sdf.Min, sdf.Max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
+        return SampleSdf(sdf.SampleBatch, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
-    public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         void BatchedSdf(Memory<Vector3> positions, Memory<float> values)
         {

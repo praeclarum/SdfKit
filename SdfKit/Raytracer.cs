@@ -19,7 +19,7 @@ public class Raytracer
 
     public int DepthIterations { get; set; } = 40;
 
-    public Raytracer(int width, int height, Sdf sdf, int batchSize = Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public Raytracer(int width, int height, Sdf sdf, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         this.width = width;
         this.height = height;

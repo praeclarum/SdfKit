@@ -21,10 +21,8 @@ public class SdfTests
                 {
                     d[i] = p[i].Length() - r;
                 }
-            },
-            new Vector3(-1, -1, -1),
-            new Vector3(1, 1, 1));
-        var v = sdf.CreateVolume(128, 128, 128);
+            });
+        var v = sdf.CreateVolume(new Vector3(-1, -1, -1), new Vector3(1, 1, 1), 128, 128, 128);
         Assert.AreEqual(-0.5f, v[63, 63, 63], 2.0e-2f);
     }
 
@@ -32,8 +30,11 @@ public class SdfTests
     public void CreateMeshSphere()
     {
         var r = 0.5f;
-        var sdf = Sdf.Sphere(r, 0.5f);
-        var mesh = sdf.CreateMesh(128, 128, 128);
+        var sdf = Sdf.Sphere(r);
+        var mesh = sdf.CreateMesh(
+            new Vector3(-1, -1, -1),
+            new Vector3(1, 1, 1),
+            128, 128, 128);
         Assert.AreEqual(19008, mesh.Vertices.Length);
     }
 }

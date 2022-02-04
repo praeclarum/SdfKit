@@ -11,7 +11,11 @@ public class MarchingCubesTests
     public void Sphere5()
     {
         var r = 1f;
-        var volume = Volume.SampleSdf(Sdf.Sphere(r, 0.5f), 5, 5, 5);
+        var volume = Volume.SampleSdf(
+            Sdf.Sphere(r),
+            -1.5f * Vector3.One,
+            1.5f * Vector3.One,
+            5, 5, 5);
         Assert.AreEqual(5, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj("Sphere5.obj");
@@ -24,7 +28,11 @@ public class MarchingCubesTests
     public void Sphere10()
     {
         var r = 2f;
-        var volume = Volume.SampleSdf(Sdf.Sphere(r, 0.5f), 10, 10, 10);
+        var volume = Volume.SampleSdf(
+            Sdf.Sphere(r),
+            -2.5f * Vector3.One,
+            2.5f * Vector3.One,
+            10, 10, 10);
         Assert.AreEqual(10, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj("Sphere10.obj");
@@ -37,7 +45,11 @@ public class MarchingCubesTests
     public void Box10()
     {
         var r = 2f;
-        var volume = Volume.SampleSdf(Sdf.Box(r, 0.5f), 10, 10, 10);
+        var volume = Volume.SampleSdf(
+            Sdf.Box(r),
+            -2.5f * Vector3.One,
+            2.5f * Vector3.One,
+            10, 10, 10);
         Assert.AreEqual(10, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj("Box10.obj");
@@ -52,15 +64,19 @@ public class MarchingCubesTests
         var n = 50;
         var sw = new Stopwatch();
         sw.Start();
-        var volume = Volume.SampleSdf(Sdf.Cylinder(1, 3), n, n, n);
+        var volume = Volume.SampleSdf(
+            Sdf.Cylinder(1, 3),
+            new Vector3(-1.5f, -3.5f, -1.5f),
+            new Vector3(1.5f, 3.5f, 1.5f),
+            n, n, n);
         sw.Stop();
         // Console.WriteLine($"SampleSdf: {sw.ElapsedMilliseconds}ms");
         Assert.AreEqual(n, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
-        mesh.WriteObj("Cylinder50.obj");
-        Assert.AreEqual(9600, mesh.Vertices.Length);
+        mesh.WriteObj($"Cylinder{n}.obj");
+        Assert.AreEqual(7056, mesh.Vertices.Length);
         Assert.AreEqual(0.0f, mesh.Center.X, 1e-6f);
-        Assert.AreEqual(1.5f, mesh.Center.Y, 1e-6f);
+        Assert.AreEqual(0.0f, mesh.Center.Y, 1e-6f);
         Assert.AreEqual(0.0f, mesh.Center.Z, 1e-6f);
         Assert.AreEqual(1, mesh.Size.X/2f, 1e-1f);
     }
@@ -69,7 +85,11 @@ public class MarchingCubesTests
     public void Sphere128Progress()
     {
         var r = 3f;
-        var volume = Volume.SampleSdf(Sdf.Sphere(r, 0.1f), 128, 128, 128);
+        var volume = Volume.SampleSdf(
+            Sdf.Sphere(r),
+            -3.1f * Vector3.One,
+            3.1f * Vector3.One,
+            128, 128, 128);
         Assert.AreEqual(128, volume.NX);
         var gotZero = false;
         var gotOne = false;

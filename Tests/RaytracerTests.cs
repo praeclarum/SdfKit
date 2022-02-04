@@ -49,7 +49,7 @@ public class RaytracerTests
             Sdf
             .CylinderExpression(r, r*2)
             .RepeatX(4*r)
-            .ToSdf(-Vector3.One, Vector3.One);
+            .ToSdf();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
         img.SaveDepthTga("CylinderDepth_50x30.tga", 3, 10);
@@ -64,8 +64,7 @@ public class RaytracerTests
     {
         var w = 50;
         var h = 30;
-        var r = 1.0f;
-        var sdf = Sdf.PlaneXY(-1, 0, r, r);
+        var sdf = Sdf.PlaneXY();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
         Assert.AreEqual(w, img.Width);
@@ -85,7 +84,7 @@ public class RaytracerTests
             Sdf
             .SphereExpression(r)
             .RepeatXY(2*r, 2*r)
-            .ToSdf(-Vector3.One, Vector3.One);
+            .ToSdf();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
         img.SaveDepthTga("SphereRepeatDepth_50x30.tga", 3, 10);
@@ -94,14 +93,14 @@ public class RaytracerTests
     [Test]
     public void SphereRepeat()
     {
-        var w = 1920;
-        var h = 1080;
+        var w = 192;
+        var h = 108;
         var r = 0.5f;
         var sdf = 
             Sdf
             .SphereExpression(r)
             .RepeatXY(2*r, 2*r)
-            .ToSdf(-Vector3.One, Vector3.One);
+            .ToSdf();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.Render();
         img.SaveRgbTga($"SphereRepeat_{w}x{h}.tga");
@@ -110,14 +109,14 @@ public class RaytracerTests
     [Test]
     public void CylinderRepeat()
     {
-        var w = 1920;
-        var h = 1080;
+        var w = 192;
+        var h = 108;
         var r = 0.5f;
         var sdf = 
             Sdf
             .CylinderExpression(r, r/4)
             .RepeatXY(2*r, r)
-            .ToSdf(-Vector3.One, Vector3.One);
+            .ToSdf();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.Render();
         img.SaveRgbTga($"CylinderRepeat_{w}x{h}.tga");

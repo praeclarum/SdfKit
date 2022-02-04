@@ -11,25 +11,13 @@ public delegate float SdfDelegate(Vector3 p);
 /// <summary>
 /// An abstract signed distance function with boundaries. Implement the method SampleBatch to return distances for a batch of points.
 /// </summary>
-public abstract class Sdf : IVolume
+public abstract class Sdf
 {
     public const int DefaultBatchSize = 2 * 1024;
 
-    public Vector3 Min { get; protected set; }
-    public Vector3 Max { get; protected set; }
-    public Vector3 Center => (Min + Max) * 0.5f;
-    public Vector3 Size => Max - Min;
-    public float Radius => (Max - Min).Length() * 0.5f;
-
-    public Sdf(Vector3 min, Vector3 max)
-    {
-        Min = min;
-        Max = max;
-    }
-
     public abstract void SampleBatch(Memory<Vector3> points, Memory<float> distances);
 
-    public void Sample(Memory<Vector3> points, Memory<float> distances, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public void Sample(Memory<Vector3> points, Memory<float> distances, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var ntotal = distances.Length;
         var numBatches = (ntotal + batchSize - 1) / batchSize;
@@ -46,20 +34,20 @@ public abstract class Sdf : IVolume
         });
     }
 
-    public virtual Volume CreateVolume(int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public virtual Volume CreateVolume(Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        return Volume.SampleSdf(this, nx, ny, nz, batchSize, maxDegreeOfParallelism);
+        return Volume.SampleSdf(this, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
-    public Mesh CreateMesh(int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
+    public Mesh CreateMesh(Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
     {
-        var volume = CreateVolume(nx, ny, nz, batchSize, maxDegreeOfParallelism);
+        var volume = CreateVolume(min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
         return volume.CreateMesh(isoValue, step, progress);
     }
 
-    public static ActionSdf FromAction(Action<Memory<Vector3>, Memory<float>> sdf, Vector3 min, Vector3 max)
+    public static ActionSdf FromAction(Action<Memory<Vector3>, Memory<float>> sdf)
     {
-        return new ActionSdf(sdf, min, max);
+        return new ActionSdf(sdf);
     }
 
     static float VMax(Vector3 v)
@@ -67,15 +55,13 @@ public abstract class Sdf : IVolume
         return Math.Max(Math.Max(v.X, v.Y), v.Z);
     }
 
-    public static Sdf Box(float bounds, float padding = 0.0f)
+    public static Sdf Box(float bounds)
     {
-        return Box(new Vector3(bounds, bounds, bounds), padding);
+        return Box(new Vector3(bounds, bounds, bounds));
     }
 
-    public static Sdf Box(Vector3 bounds, float padding = 0.0f)
+    public static Sdf Box(Vector3 bounds)
     {
-        var min = new Vector3(-bounds.X - padding, -bounds.Y - padding, -bounds.Z - padding);
-        var max = new Vector3(bounds.X + padding, bounds.Y + padding, bounds.Z + padding);
         return Sdf.FromAction((ps, ds) =>
         {
             int n = ps.Length;
@@ -87,7 +73,7 @@ public abstract class Sdf : IVolume
                 d[i] = Vector3.Max(wd, Vector3.Zero).Length() +
                        VMax(Vector3.Min(wd, Vector3.Zero));
             }
-        }, min, max);
+        });
     }
 
     public static SdfExpression CylinderExpression(float r, float h) =>
@@ -97,7 +83,7 @@ public abstract class Sdf : IVolume
     {
         var min = new Vector3(-radius - padding, 0 - padding, -radius - padding);
         var max = new Vector3(radius + padding, height + padding, radius + padding);
-        return CylinderExpression(radius, height).ToSdf(min, max);
+        return CylinderExpression(radius, height).ToSdf();
         // return Sdf.FromAction((ps, ds) =>
         // {
         //     int n = ps.Length;
@@ -111,7 +97,7 @@ public abstract class Sdf : IVolume
         // }, min, max);
     }
 
-    public static Sdf Plane(Vector3 normal, float distanceFromOrigin, Vector3 min, Vector3 max)
+    public static Sdf Plane(Vector3 normal, float distanceFromOrigin)
     {
         return Sdf.FromAction((ps, ds) =>
         {
@@ -122,34 +108,28 @@ public abstract class Sdf : IVolume
             {
                 d[i] = Vector3.Dot(p[i], normal) + distanceFromOrigin;
             }
-        }, min, max);
+        });
     }
 
-    public static Sdf PlaneXY(float zmin, float zmax, float xbound, float ybound, float padding = 0.0f)
+    public static Sdf PlaneXY(float z = 0)
     {
         return Plane(
             new Vector3(0, 0, 1),
-            zmax,
-            new Vector3(-xbound - padding, -ybound - padding, zmin - padding),
-            new Vector3(xbound + padding, ybound + padding, zmax + padding));
+            z);
     }
 
-    public static Sdf PlaneXZ(float ymin, float ymax, float xbound, float zbound, float padding = 0.0f)
+    public static Sdf PlaneXZ(float y = 0)
     {
         return Plane(
             new Vector3(0, 1, 0),
-            ymax,
-            new Vector3(-xbound - padding, ymin - padding, -zbound - padding),
-            new Vector3(xbound + padding, ymax + padding, zbound + padding));
+            y);
     }
 
     public static SdfExpression SphereExpression(float r) =>
         p => p.Length() - r;
 
-    public static Sdf Sphere(float radius, float padding = 0.0f)
+    public static Sdf Sphere(float radius)
     {
-        var min = new Vector3(-radius - padding, -radius - padding, -radius - padding);
-        var max = new Vector3(radius + padding, radius + padding, radius + padding);
         return Sdf.FromAction((ps, ds) =>
         {
             int n = ps.Length;
@@ -159,7 +139,7 @@ public abstract class Sdf : IVolume
             {
                 d[i] = p[i].Length() - radius;
             }
-        }, min, max);
+        });
     }
 
 }
@@ -171,8 +151,7 @@ public class ActionSdf : Sdf
 {
     SdfAction sampleAction;
 
-    public ActionSdf(SdfAction action, Vector3 min, Vector3 max)
-        : base(min, max)
+    public ActionSdf(SdfAction action)
     {
         sampleAction = action;
     }
@@ -218,9 +197,9 @@ public static class SdfExpressionExtensions
             p.X,
             Mod((p.Y + sizeY*0.5f), sizeY) - sizeY*0.5f,
             p.Z));
-    public static Sdf ToSdf(this SdfExpression expression, Vector3 min, Vector3 max)
+    public static Sdf ToSdf(this SdfExpression expression)
     {
-        return new ActionSdf(CompileSdfAction(expression), min, max);
+        return new ActionSdf(CompileSdfAction(expression));
     }
     public static SdfDelegate ToSdfDelegate(this SdfExpression expression)
     {
@@ -270,4 +249,9 @@ public static class SdfExpressionExtensions
         var lambda = Expression.Lambda<SdfAction>(body, pm, dm);
         return lambda.Compile();
     }
+}
+
+public class SdfConfig
+{
+    public const int DefaultBatchSize = 2*1024;
 }
