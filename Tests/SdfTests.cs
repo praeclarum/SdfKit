@@ -32,7 +32,7 @@ public class SdfTests
     public void CreateMeshSphere()
     {
         var r = 0.5f;
-        var sdf = Sdf.CreateSphere(r, 0.5f);
+        var sdf = Sdf.Sphere(r, 0.5f);
         var mesh = sdf.CreateMesh(128, 128, 128);
         Assert.AreEqual(19008, mesh.Vertices.Length);
     }

@@ -48,7 +48,7 @@ public abstract class Sdf : IVolume
         return new ActionSdf(sdf, min, max);
     }
 
-    public static Sdf CreateSphere(float radius, float padding = 0.0f)
+    public static Sdf Sphere(float radius, float padding = 0.0f)
     {
         var min = new Vector3(-radius - padding, -radius - padding, -radius - padding);
         var max = new Vector3(radius + padding, radius + padding, radius + padding);
@@ -60,6 +60,34 @@ public abstract class Sdf : IVolume
             for (var i = 0; i < n; ++i)
             {
                 d[i] = p[i].Length() - radius;
+            }
+        }, min, max);
+    }
+
+    static float VMax(Vector3 v)
+    {
+        return Math.Max(Math.Max(v.X, v.Y), v.Z);
+    }
+
+    public static Sdf Box(float radius, float padding = 0.0f)
+    {
+        return Box(new Vector3(radius, radius, radius), padding);
+    }
+
+    public static Sdf Box(Vector3 radius, float padding = 0.0f)
+    {
+        var min = new Vector3(-radius.X - padding, -radius.Y - padding, -radius.Z - padding);
+        var max = new Vector3(radius.X + padding, radius.Y + padding, radius.Z + padding);
+        return Sdf.FromAction((ps, ds) =>
+        {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
+            for (var i = 0; i < n; ++i)
+            {
+                var wd = Vector3.Abs(p[i]) - radius;
+                d[i] = Vector3.Max(wd, Vector3.Zero).Length() + 
+                       VMax(Vector3.Min(wd, Vector3.Zero));
             }
         }, min, max);
     }
