@@ -119,6 +119,21 @@ public class FloatData : VectorData
     }
 
     public void AddInplace(FloatData other) => GenericAddInplace(other);
+
+    public FloatData AddInplace(FloatSwizzling b)
+    {
+        if (b.Component == VectorComponent.W && b.Data is Vec4Data) {
+            var n = Length;
+            var bv = b.Data.Values;
+            for (int i = 0; i < n; i++) {
+                Values[i] += bv[i*4 + 3];
+            }
+        } else {
+            throw new NotSupportedException($"Cannot add {b.Component} from {b.Data.GetType()}");
+        }
+        return this;
+    }
+
     public void MultiplyInplace(FloatData other) => GenericMultiplyInplace(other);
     public void NotInplace() => GenericNotInplace();
 
@@ -353,8 +368,25 @@ public class Vec3Data : VectorData
         return data;
     }
 
-    public Vec3Data AddInplace(Vec3Data other) =>
-        (Vec3Data)GenericAddInplace(other);
+    public Vec3Data AddInplace(Vec3Data b) =>
+        (Vec3Data)GenericAddInplace(b);
+
+    public Vec3Data AddInplace(Vec3Swizzling b)
+    {
+        if (b.Data is Vec4Data b4 && b.XComponent == VectorComponent.X && b.YComponent == VectorComponent.Y && b.ZComponent == VectorComponent.Z) {
+            var n = Length;
+            var bv = b4.Values;
+            for (int i = 0, j = 0; i < n; i+= 3, j += 4) {
+                Values[i] += bv[j];
+                Values[i+1] += bv[j+1];
+                Values[i+2] += bv[j+2];
+            }
+            return this;
+        }
+        else {
+            throw new NotSupportedException($"Cannot add {b.Data.GetType()} to {GetType()}");
+        }
+    }
 
     public Vec3Data AddInplace(Vector3 b)
     {
@@ -510,7 +542,73 @@ public class Vec3Data : VectorData
             }
         }
     }
+}
 
+public class Vec4Data : VectorData
+{
+    public Memory<Vector4> Vector4Memory => MemoryUtils.Cast<float, Vector4>(FloatMemory);
+
+    public Vec3Swizzling Xyz => new Vec3Swizzling(this, VectorComponent.X, VectorComponent.Y, VectorComponent.Z);
+    public FloatSwizzling W => new FloatSwizzling(this, VectorComponent.W);
+
+    public Vector4 this[int x, int y] {
+        get {
+            var i = (y*Width + x)*4;
+            return new Vector4(Values[i], Values[i+1], Values[i+2], Values[i+3]);
+        }
+    }
+
+    public Vec4Data(int width, int height, ArrayPool<float> pool) 
+        : base(width, height, 4, pool)
+    {
+    }
+
+    public Vec4Data(Vec4Data other)
+        : base(other.Width, other.Height, other.Dimensions, other.Pool)
+    {
+        Buffer.BlockCopy(other.Values, 0, Values, 0, Length * sizeof(float));
+    }
+
+    public Vec4Data Clone()
+    {
+        return new Vec4Data(this);
+    }
+}
+
+public enum VectorComponent
+{
+    X,
+    Y,
+    Z,
+    W,
+}
+
+public abstract class Swizzling {}
+
+public class FloatSwizzling : Swizzling {
+    public readonly VectorData Data;
+    public readonly VectorComponent Component;
+
+    public FloatSwizzling(VectorData data, VectorComponent component)
+    {
+        Data = data;
+        Component = component;
+    }
+}
+
+public class Vec3Swizzling : Swizzling {
+    public readonly VectorData Data;
+    public readonly VectorComponent XComponent;
+    public readonly VectorComponent YComponent;
+    public readonly VectorComponent ZComponent;
+
+    public Vec3Swizzling(VectorData data, VectorComponent xComponent, VectorComponent yComponent, VectorComponent zComponent)
+    {
+        Data = data;
+        XComponent = xComponent;
+        YComponent = yComponent;
+        ZComponent = zComponent;
+    }
 }
 
 public static class VectorOps
@@ -524,6 +622,62 @@ public static class VectorOps
     public static Vec3Data Normalize(Vec3Data xyz) =>
         xyz.Clone().NormalizeInplace();
 
+    public static Vec3Data Vec3(FloatSwizzling x, FloatSwizzling y, FloatSwizzling z)
+    {
+        var data = new Vec3Data(x.Data.Width, x.Data.Height, x.Data.Pool);
+        var v = data.Values;
+        var xv = x.Data.Values;
+        var yv = y.Data.Values;
+        var zv = z.Data.Values;
+        var xstride = x.Data.Dimensions;
+        var ystride = y.Data.Dimensions;
+        var zstride = z.Data.Dimensions;
+        var n = data.Length;
+        for (int i = 0, xi = (int)x.Component, yi = (int)y.Component, zi = (int)z.Component; i < n; ) {
+            v[i++] = xv[xi];
+            v[i++] = yv[yi];
+            v[i++] = zv[zi];
+            xi += xstride;
+            yi += ystride;
+            zi += zstride;
+        }
+        return data;
+    }
+
+    public static Vec3Data Vec3(Vec2Data xy, float z)
+    {
+        var data = new Vec3Data(xy.Width, xy.Height, xy.Pool);
+        var v = data.Values;
+        var bv = xy.Values;
+        var n = data.Length;
+        for (int i = 0, j = 0; i < n; ) {
+            var x = bv[j++];
+            var y = bv[j++];
+            v[i++] = x;
+            v[i++] = y;
+            v[i++] = z;
+        }
+        return data;
+    }
+
+    public static Vec3Data Vec3(FloatData x, FloatData y, FloatData z)
+    {
+        var data = new Vec3Data(x.Width, x.Height, x.Pool);
+        var v = data.Values;
+        var bx = x.Values;
+        var by = y.Values;
+        var bz = z.Values;
+        var n = data.Length;
+        for (int i = 0, j = 0; i < n; ) {
+            v[i++] = bx[j];
+            v[i++] = by[j];
+            v[i++] = bz[j];
+            j++;
+        }
+        return data;
+    }
+
     public static float VMax(Vector3 v) =>
         Math.Max(Math.Max(v.X, v.Y), v.Z);
+
 }

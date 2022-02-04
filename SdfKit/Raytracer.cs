@@ -55,14 +55,14 @@ public class Raytracer
     /// <summary>
     /// Returns a depth for every ray.
     /// </summary>
-    FloatData RenderDepth(Vec3Data ro, Vec3Data rd)
+    FloatData RenderDepth(Vec3Data rayOrigin, Vec3Data rayDir)
     {
         var depth = Float(ZNear - 0.1f);
         for (int i = 0; i < DepthIterations; i++) {
-            using var dp = rd*depth;
-            dp.AddInplace(ro);
-            using var d = Map(dp);
-            depth.AddInplace(d);
+            using var samplePos = rayDir*depth;
+            samplePos.AddInplace(rayOrigin);
+            using var sampleDistance = Scene(samplePos);
+            depth.AddInplace(sampleDistance.W);
         }
         return depth;
     }
@@ -88,7 +88,7 @@ public class Raytracer
                 uvv[i++] = y;
             }
         }
-        ro = Vec3(0, 0, 5);
+        ro = NewVec3(0, 0, 5);
         using var nearPlane = Vec3(uv, -ZNear);
         rd = Normalize(nearPlane);
     }
@@ -100,16 +100,19 @@ public class Raytracer
     {
         // Find surface intersection for every ray.
         using var depth = Float(ZNear - 0.1f);
+        using var diffuseColor = NewVec3(0.0f, 0.0f, 0.0f);
         for (int i = 0; i < DepthIterations; i++) {
-            using var depthSamplePos = rayDir*depth;
-            depthSamplePos.AddInplace(rayOrigin);
-            using var d = Map(depthSamplePos);
-            depth.AddInplace(d);
+            using var samplePos = rayDir*depth;
+            samplePos.AddInplace(rayOrigin);
+            using var sampleDist = Scene(samplePos);
+            depth.AddInplace(sampleDist.W);
+            if (i == DepthIterations - 1) {
+                diffuseColor.AddInplace(sampleDist.Xyz);
+            }
         }
         var surfacePos = rayOrigin + rayDir*depth;
         // Calculate the lighting
         using var surfaceNormal = DistanceGradient(surfacePos).NormalizeInplace();
-        var diffuseColor = new Vector3(1.0f, 0.5f, 0.25f);
         var lightPosition = new Vector3(5f, 5f, 10.0f);
         using var lightDirection = (lightPosition - surfacePos).NormalizeInplace();
         using var diffuseValue =
@@ -138,13 +141,13 @@ public class Raytracer
 
     Vec3Data DistanceGradient(Vec3Data p)
     {
-        FloatData? px = null, py = null, pz = null;
-        FloatData? nx = null, ny = null, nz = null;
+        Vec4Data? px = null, py = null, pz = null;
+        Vec4Data? nx = null, ny = null, nz = null;
         
         Parallel.ForEach(GradOffsets, (o, s, i) => {
             // Console.WriteLine($"{i} = {o}");
             using var op = p + o;
-            var d = Map(op);
+            var d = Scene(op);
             switch (i) {
                 case 0: px = d; break;
                 case 1: py = d; break;
@@ -162,16 +165,16 @@ public class Raytracer
         }
         using (px) using (py) using (pz)
         using (nx) using (ny) using (nz) {
-            using var pp = Vec3(px, py, pz);
-            using var np = Vec3(nx, ny, nz);
+            using var pp = Vec3(px.W, py.W, pz.W);
+            using var np = Vec3(nx.W, ny.W, nz.W);
             return pp - np;
         }
     }
 
-    FloatData Map(Vec3Data p)
+    Vec4Data Scene(Vec3Data p)
     {
-        var distances = NewFloat();
-        sdf.Sample(p.Vector3Memory, distances.FloatMemory, batchSize, maxDegreeOfParallelism);
+        var distances = NewVec4();
+        sdf.Sample(p.Vector3Memory, distances.Vector4Memory, batchSize, maxDegreeOfParallelism);
         return distances;
     }
 
@@ -184,7 +187,9 @@ public class Raytracer
     }
     Vec2Data NewVec2() => new Vec2Data(width, height, pool);
     Vec3Data NewVec3() => new Vec3Data(width, height, pool);
-    Vec3Data Vec3(float x, float y, float z)
+    Vec4Data NewVec4() => new Vec4Data(width, height, pool);
+    
+    Vec3Data NewVec3(float x, float y, float z)
     {
         var data = NewVec3();
         var v = data.Values;
@@ -196,35 +201,5 @@ public class Raytracer
         }
         return data;
     }
-    Vec3Data Vec3(Vec2Data xy, float z)
-    {
-        var data = NewVec3();
-        var v = data.Values;
-        var bv = xy.Values;
-        var n = data.Length;
-        for (int i = 0, j = 0; i < n; ) {
-            var x = bv[j++];
-            var y = bv[j++];
-            v[i++] = x;
-            v[i++] = y;
-            v[i++] = z;
-        }
-        return data;
-    }
-    Vec3Data Vec3(FloatData x, FloatData y, FloatData z)
-    {
-        var data = NewVec3();
-        var v = data.Values;
-        var bx = x.Values;
-        var by = y.Values;
-        var bz = z.Values;
-        var n = data.Length;
-        for (int i = 0, j = 0; i < n; ) {
-            v[i++] = bx[j];
-            v[i++] = by[j];
-            v[i++] = bz[j];
-            j++;
-        }
-        return data;
-    }
+
 }

@@ -26,7 +26,7 @@ public class VolumeTests
     [Test]
     public void ZeroSdf()
     {
-        var sdf = (Vector3 p) => 0.0f;
+        var sdf = (Vector3 p) => Vector4.Zero;
         var v = Volume.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
@@ -44,7 +44,7 @@ public class VolumeTests
             Assert.AreEqual(0.0f, p.X, 0.001f);
             Assert.AreEqual(0.0f, p.Y, 0.001f);
             Assert.AreEqual(0.0f, p.Z, 0.001f);
-            return 1.0f;
+            return Vector4.One;
         };
         var v = Volume.SampleSdf(
             sdf,
@@ -64,7 +64,7 @@ public class VolumeTests
             Assert.AreEqual(1.0f, Math.Abs(p.X), 0.001f);
             Assert.AreEqual(1.0f, Math.Abs(p.Y), 0.001f);
             Assert.AreEqual(1.0f, Math.Abs(p.Z), 0.001f);
-            return 1.0f;
+            return Vector4.One;
         };
         var v = Volume.SampleSdf(
             sdf,
@@ -85,7 +85,7 @@ public class VolumeTests
             {
                 hasCenter = true;
             }
-            return 1.0f;
+            return Vector4.One;
         };
         var v = Volume.SampleSdf(
             sdf,
@@ -102,7 +102,7 @@ public class VolumeTests
     public void SphereWidthSdf()
     {
         var r = 0.5f;
-        var sdf = (Vector3 p) => p.Length() - r;
+        var sdf = (Vector3 p) => new Vector4(1, 1, 1, p.Length() - r);
         var v = Volume.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
@@ -115,7 +115,7 @@ public class VolumeTests
     public void Sphere()
     {
         var r = 0.5f;
-        var sdf = (Vector3 p) => p.Length() - r;
+        var sdf = (Vector3 p) => new Vector4(1, 1, 1, p.Length() - r);
         var v = Volume.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
@@ -128,7 +128,7 @@ public class VolumeTests
     public void SphereWithBatchSize()
     {
         var r = 0.5f;
-        Sdf sdf = (Memory<Vector3> ps, Memory<float> ds) => {
+        Sdf sdf = (Memory<Vector3> ps, Memory<Vector4> ds) => {
             // Console.WriteLine($"Thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}, N = {n}");
             int n = ps.Length;
             var p = ps.Span;
@@ -137,7 +137,7 @@ public class VolumeTests
                 Assert.AreEqual(70, n);
             for (var i = 0; i < n; ++i)
             {
-                d[i] = p[i].Length() - r;
+                d[i] = new Vector4(1, 1, 1, p[i].Length() - r);
             }
         };
         var sw = new Stopwatch();

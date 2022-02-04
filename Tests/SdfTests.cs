@@ -18,7 +18,7 @@ public class SdfTests
             var d = ds.Span;
             for (var i = 0; i < n; ++i)
             {
-                d[i] = p[i].Length() - r;
+                d[i] = new Vector4(1, 1, 1, p[i].Length() - r);
             }
         };
         var v = sdf.CreateVolume(new Vector3(-1, -1, -1), new Vector3(1, 1, 1), 128, 128, 128);

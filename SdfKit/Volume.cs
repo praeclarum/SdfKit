@@ -55,9 +55,9 @@ public class Volume : IBoundedVolume
         var options = new System.Threading.Tasks.ParallelOptions { 
             MaxDegreeOfParallelism = maxDegreeOfParallelism,
         };
-        System.Threading.Tasks.Parallel.For<(Vector3[],float[])>(0, numBatches, options, () => {
+        System.Threading.Tasks.Parallel.For<(Vector3[],Vector4[])>(0, numBatches, options, () => {
             var positions = new Vector3[batchSize];
-            var values = new float[batchSize];
+            var values = new Vector4[batchSize];
             
             return (positions, values);
         }, (ib, _, pvs) =>
@@ -84,7 +84,7 @@ public class Volume : IBoundedVolume
                 var ix = i % nx;
                 var iy = (i / nx) % ny;
                 var iz = i / (nx * ny);
-                volume[ix, iy, iz] = values[i - startI];
+                volume[ix, iy, iz] = values[i - startI].W;
             }
             return pvs;
         }, x => {
@@ -99,9 +99,9 @@ public class Volume : IBoundedVolume
         return volume;
     }
 
-    public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume SampleSdf(Func<Vector3, Vector4> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        Sdf batchedSdf = (Memory<Vector3> positions, Memory<float> values) =>
+        Sdf batchedSdf = (Memory<Vector3> positions, Memory<Vector4> values) =>
         {
             var count = positions.Length;
             var p = positions.Span;
