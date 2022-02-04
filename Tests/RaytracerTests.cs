@@ -44,15 +44,19 @@ public class RaytracerTests
     {
         var w = 50;
         var h = 30;
-        var r = 1.0f;
-        var sdf = Sdf.Cylinder(r/8, r/2);
+        var r = 0.25f;
+        var sdf = 
+            Sdf
+            .CylinderExpression(r, r*2)
+            .RepeatX(4*r)
+            .ToSdf(-Vector3.One, Vector3.One);
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
+        img.SaveTga("CylinderDepth_50x30.tga", 3, 10);
         Assert.AreEqual(w, img.Width);
         Assert.AreEqual(h, img.Height);
         Assert.AreEqual(5-r/8, img[w/2, h/2-2], 1.0e-1f);
         Assert.Greater(img[0, 0], 9.0f);
-        img.SaveTga("CylinderDepth_50x30.tga", 3, 10);
     }
 
     [Test]
@@ -70,4 +74,25 @@ public class RaytracerTests
         Assert.Less(img[0, 0], 9.0f);
         img.SaveTga("PlaneDepth_50x30.tga", 3, 10);
     }
+
+    [Test]
+    public void SphereRepeatDepth()
+    {
+        var w = 1024;
+        var h = 768;
+        var r = 0.5f;
+        var sdf = 
+            Sdf
+            .SphereExpression(r)
+            .RepeatXY(2*r, 2*r)
+            .ToSdf(-Vector3.One, Vector3.One);
+        var rt = new Raytracer(w, h, sdf);
+        using var img = rt.RenderDepth();
+        img.SaveTga("SphereRepeatDepth_50x30.tga", 3, 10);
+        Assert.AreEqual(w, img.Width);
+        Assert.AreEqual(h, img.Height);
+        Assert.AreEqual(4.0f, img[w/2, h/2], 1.0e-2f);
+        Assert.Greater(img[0, 0], 9.0f);
+    }
+
 }

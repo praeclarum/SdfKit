@@ -37,7 +37,7 @@ public abstract class Sdf : IVolume
             MaxDegreeOfParallelism = maxDegreeOfParallelism,
         };
         System.Threading.Tasks.Parallel.For(0, numBatches, options, ib => {
-            Console.WriteLine($"Batch {ib} of {numBatches}");
+            // Console.WriteLine($"Batch {ib} of {numBatches}");
             var startI = ib * batchSize;
             var endI = Math.Min(ntotal, startI + batchSize);
             var pointsSlice = points.Slice(startI, endI - startI);
@@ -90,7 +90,7 @@ public abstract class Sdf : IVolume
         }, min, max);
     }
 
-    static SdfExpression CylinderExpression(float r, float h) =>
+    public static SdfExpression CylinderExpression(float r, float h) =>
         p => MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h);
 
     public static Sdf Cylinder(float radius, float height, float padding = 0.0f)
@@ -143,6 +143,9 @@ public abstract class Sdf : IVolume
             new Vector3(xbound + padding, ymax + padding, zbound + padding));
     }
 
+    public static SdfExpression SphereExpression(float r) =>
+        p => p.Length() - r;
+
     public static Sdf Sphere(float radius, float padding = 0.0f)
     {
         var min = new Vector3(-radius - padding, -radius - padding, -radius - padding);
@@ -182,9 +185,46 @@ public class ActionSdf : Sdf
 
 public static class SdfExpressionExtensions
 {
+    static float Mod(float a, float b)
+    {
+        return a - b * MathF.Floor(a / b);
+    }
+
+    public static SdfExpression ChangePostion(this SdfExpression sdf, Expression<Func<Vector3, Vector3>> changePosition)
+    {
+        var p = Expression.Parameter(typeof(Vector3), "p");
+        return Expression.Lambda<SdfDelegate>(
+                Expression.Invoke(
+                    sdf,
+                    Expression.Invoke(
+                        changePosition,
+                        p)),
+                new[]{p});
+    }
+    public static SdfExpression RepeatX(this SdfExpression sdf, float sizeX) =>
+        sdf.ChangePostion(p => new Vector3(
+            Mod((p.X + sizeX*0.5f), sizeX) - sizeX*0.5f,
+            p.Y,
+            p.Z));
+    public static SdfExpression RepeatXY(this SdfExpression sdf, float sizeX, float sizeY)
+    {
+        return sdf.ChangePostion(p => new Vector3(
+            Mod((p.X + sizeX*0.5f), sizeX) - sizeX*0.5f,
+            Mod((p.Y + sizeY*0.5f), sizeY) - sizeY*0.5f,
+            p.Z));
+    }
+    public static SdfExpression RepeatY(this SdfExpression sdf, float sizeY) =>
+        sdf.ChangePostion(p => new Vector3(
+            p.X,
+            Mod((p.Y + sizeY*0.5f), sizeY) - sizeY*0.5f,
+            p.Z));
     public static Sdf ToSdf(this SdfExpression expression, Vector3 min, Vector3 max)
     {
         return new ActionSdf(CompileSdfAction(expression), min, max);
+    }
+    public static SdfDelegate ToSdfDelegate(this SdfExpression expression)
+    {
+        return expression.Compile();
     }
 
     static readonly System.Reflection.PropertyInfo SpanOfFloatMemory = typeof(Memory<float>).GetProperty(nameof(Memory<float>.Span));
