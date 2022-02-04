@@ -94,8 +94,8 @@ public class RaytracerTests
     [Test]
     public void SphereRepeat()
     {
-        var w = 50;
-        var h = 30;
+        var w = 1920;
+        var h = 1080;
         var r = 0.5f;
         var sdf = 
             Sdf
@@ -105,6 +105,22 @@ public class RaytracerTests
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.Render();
         img.SaveRgbTga($"SphereRepeat_{w}x{h}.tga");
+    }
+
+    [Test]
+    public void CylinderRepeat()
+    {
+        var w = 1920;
+        var h = 1080;
+        var r = 0.5f;
+        var sdf = 
+            Sdf
+            .CylinderExpression(r, r/4)
+            .RepeatXY(2*r, r)
+            .ToSdf(-Vector3.One, Vector3.One);
+        var rt = new Raytracer(w, h, sdf);
+        using var img = rt.Render();
+        img.SaveRgbTga($"CylinderRepeat_{w}x{h}.tga");
     }
 
 }

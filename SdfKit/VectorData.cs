@@ -146,6 +146,15 @@ public class FloatData : VectorData
         return data;
     }
 
+    public FloatData MaxInplace(float value)
+    {
+        var n = Length;
+        for (int i = 0; i < n; i++) {
+            Values[i] = MathF.Max(Values[i], value);
+        }
+        return this;
+    }
+
     public static Vec3Data operator *(FloatData a, Vector3 b)
     {
         var data = new Vec3Data(a.Width, a.Height, a.Pool);
@@ -156,6 +165,22 @@ public class FloatData : VectorData
             v[j++] = av[i] * b.X;
             v[j++] = av[i] * b.Y;
             v[j++] = av[i] * b.Z;
+        }
+        return data;
+    }
+
+    public static Vec3Data operator *(FloatData a, Vec3Data b)
+    {
+        var data = new Vec3Data(a.Width, a.Height, a.Pool);
+        var v = data.Values;
+        var av = a.Values;
+        var bv = b.Values;
+        var n = a.Length;
+        for (int i = 0, j = 0; i < n; i++) {
+            v[j] = av[i] * bv[j];
+            v[j+1] = av[i] * bv[j+1];
+            v[j+2] = av[i] * bv[j+2];
+            j += 3;
         }
         return data;
     }
@@ -336,10 +361,23 @@ public class Vec3Data : VectorData
         var n = Length;
         for (int i = 0; i < n; i += 3) {
             Values[i] += b.X;
-            Values[i+0] += b.Y;
-            Values[i+1] += b.Z;
+            Values[i+1] += b.Y;
+            Values[i+2] += b.Z;
         }
         return this;
+    }
+
+    public FloatData DotInplace(Vec3Data b)
+    {
+        var data = new FloatData(Width, Height, Pool);
+        var n = Length;
+        var av = Values;
+        var bv = b.Values;
+        var v = data.Values;
+        for (int i = 0, j = 0; i < n; i += 3, j++) {
+            v[j] = av[i]*bv[i] + av[i+1]*bv[i+1] + av[i+2]*bv[i+2];
+        }
+        return data;
     }
 
     public static Vec3Data operator *(Vec3Data a, FloatData b)
@@ -389,6 +427,20 @@ public class Vec3Data : VectorData
     {
         var data = new Vec3Data(a);
         data.SubtractInplace(b);
+        return data;
+    }
+
+    public static Vec3Data operator -(Vector3 a, Vec3Data b)
+    {
+        var data = new Vec3Data(b);
+        var v = data.Values;
+        var bv = b.Values;
+        var n = data.Length;
+        for (int i = 0; i < n; i += 3) {
+            v[i] = a.X - bv[i];
+            v[i+1] = a.Y - bv[i+1];
+            v[i+2] = a.Z - bv[i+2];
+        }
         return data;
     }
 
@@ -458,14 +510,14 @@ public class Vec3Data : VectorData
             }
         }
     }
+
 }
 
 public static class VectorOps
 {
-    public static Vec3Data Normalize(Vec3Data xyz)
-    {
-        var data = xyz.Clone();
-        data.NormalizeInplace();
-        return data;
-    }
+    public static Vec3Data Normalize(Vec3Data xyz) =>
+        xyz.Clone().NormalizeInplace();
+
+    public static FloatData Dot(Vec3Data a, Vec3Data b) =>
+        a.Clone().DotInplace(b);
 }

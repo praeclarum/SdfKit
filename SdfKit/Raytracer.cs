@@ -96,22 +96,31 @@ public class Raytracer
     /// <summary>
     /// Returns a color for every pixel in fragCoord.
     /// </summary>
-    Vec3Data Render(Vec3Data ro, Vec3Data rd)
+    Vec3Data Render(Vec3Data rayOrigin, Vec3Data rayDir)
     {
-        using var t = Float(ZNear - 0.1f);
+        // Find surface intersection for every ray.
+        using var depth = Float(ZNear - 0.1f);
         for (int i = 0; i < DepthIterations; i++) {
-            using var dp = rd*t;
-            dp.AddInplace(ro);
-            using var d = Map(dp);
-            t.AddInplace(d);
+            using var depthSamplePos = rayDir*depth;
+            depthSamplePos.AddInplace(rayOrigin);
+            using var d = Map(depthSamplePos);
+            depth.AddInplace(d);
         }
-        var rp = ro + rd*t;
-        var n = DistGrad(rp).NormalizeInplace();
-        using var bgmask = t > 9.0f;
-        using var bg = bgmask * new Vector3(0.5f, 0.75f, 1.0f);
-        var diff = new Vector3(1.0f, 0.5f, 0.25f);
-        bgmask.NotInplace();
-        using var fg = bgmask * diff;
+        var surfacePos = rayOrigin + rayDir*depth;
+        // Calculate the lighting
+        using var surfaceNormal = DistanceGradient(surfacePos).NormalizeInplace();
+        var diffuseColor = new Vector3(1.0f, 0.5f, 0.25f);
+        var lightPosition = new Vector3(5f, 5f, 10.0f);
+        using var lightDirection = (lightPosition - surfacePos).NormalizeInplace();
+        using var diffuseValue =
+            Dot(surfaceNormal, lightDirection)
+            .MaxInplace(0.0f);
+        using var diffuse = diffuseValue * diffuseColor;
+        // Calculate the color
+        using var bgMask = depth > 9.0f;
+        using var bg = bgMask * new Vector3(0.5f, 0.75f, 1.0f);
+        bgMask.NotInplace();
+        using var fg = bgMask * diffuse;
         var fragColor = fg + bg;
         return fragColor;
     }
@@ -127,7 +136,7 @@ public class Raytracer
         -GradOffset * Vector3.UnitZ,
     };
 
-    Vec3Data DistGrad(Vec3Data p)
+    Vec3Data DistanceGradient(Vec3Data p)
     {
         FloatData? px = null, py = null, pz = null;
         FloatData? nx = null, ny = null, nz = null;
@@ -157,7 +166,6 @@ public class Raytracer
             using var np = Vec3(nx, ny, nz);
             return pp - np;
         }
-        throw new NotImplementedException ();
     }
 
     FloatData Map(Vec3Data p)
