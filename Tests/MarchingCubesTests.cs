@@ -68,10 +68,10 @@ public class MarchingCubesTests
         });
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1, progress);
         mesh.WriteObj("Sphere128.obj");
-        Assert.AreEqual(287016, mesh.Vertices.Length);
+        Assert.AreEqual(71016, mesh.Vertices.Length);
         Assert.IsTrue(gotZero);
         Assert.IsTrue(gotOne);
         Assert.AreEqual(mesh.Center.Length(), 0.0f, 1e-6f);
-        Assert.AreEqual(r, mesh.Size.X/2f, 1e-4f);
+        Assert.AreEqual(r, mesh.Size.X/2f, 1e-3f);
     }
 }

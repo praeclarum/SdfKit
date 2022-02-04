@@ -2,7 +2,7 @@ using System.Buffers;
 
 namespace SdfKit;
 
-public class FrameData : IDisposable
+public class VectorData : IDisposable
 {
     public readonly float[] Values;
     public readonly int Width;
@@ -14,7 +14,7 @@ public class FrameData : IDisposable
 
     public Memory<float> FloatMemory => Values.AsMemory(0, Length);
 
-    public FrameData(int width, int height, int dim, ArrayPool<float> pool)
+    public VectorData(int width, int height, int dim, ArrayPool<float> pool)
     {
         this.Width = width;
         this.Height = height;
@@ -65,7 +65,7 @@ public class FrameData : IDisposable
         }
     }
 
-    protected void GenericAddInplace(FrameData other)
+    protected void GenericAddInplace(VectorData other)
     {
         var n = Length;
         Debug.Assert(Length == other.Length);
@@ -74,7 +74,7 @@ public class FrameData : IDisposable
         }
     }
 
-    protected void GenericMultiplyInplace(FrameData other)
+    protected void GenericMultiplyInplace(VectorData other)
     {
         var n = Length;
         Debug.Assert(Length == other.Length);
@@ -84,7 +84,7 @@ public class FrameData : IDisposable
     }
 }
 
-public class FloatData : FrameData
+public class FloatData : VectorData
 {
     public float this[int x, int y] => Values[y*Width + x];
 
@@ -129,7 +129,7 @@ public class FloatData : FrameData
     }
 }
 
-public class Vec2Data : FrameData
+public class Vec2Data : VectorData
 {
     public Memory<Vector2> Vector2Memory => MemoryUtils.Cast<float, Vector2>(FloatMemory);
 
@@ -223,7 +223,7 @@ public class Vec2Data : FrameData
     }
 }
 
-public class Vec3Data : FrameData
+public class Vec3Data : VectorData
 {
     public Memory<Vector3> Vector3Memory => MemoryUtils.Cast<float, Vector3>(FloatMemory);
 
