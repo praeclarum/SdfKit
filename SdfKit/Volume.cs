@@ -39,7 +39,7 @@ public class Volume : IBoundedVolume
         return MarchingCubes.CreateMesh(this, isoValue, step, progress);
     }
 
-    public void SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, int batchSize =SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public void SampleSdf(Sdf sdf, int batchSize =SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var volume = Values;
         var nx = NX;
@@ -94,12 +94,14 @@ public class Volume : IBoundedVolume
 
     public static Volume SampleSdf(Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        return SampleSdf(sdf.SampleBatch, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
+        var volume = new Volume(min, max, nx, ny, nz);
+        volume.SampleSdf(sdf, batchSize, maxDegreeOfParallelism);
+        return volume;
     }
 
     public static Volume SampleSdf(Func<Vector3, float> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        void BatchedSdf(Memory<Vector3> positions, Memory<float> values)
+        Sdf batchedSdf = (Memory<Vector3> positions, Memory<float> values) =>
         {
             var count = positions.Length;
             var p = positions.Span;
@@ -108,15 +110,8 @@ public class Volume : IBoundedVolume
             {
                 v[i] = sdf(p[i]);
             }
-        }
-        return SampleSdf(BatchedSdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
-    }
-
-    public static Volume SampleSdf(Action<Memory<Vector3>, Memory<float>> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize =Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
-    {
-        var volume = new Volume(min, max, nx, ny, nz);
-        volume.SampleSdf(sdf, batchSize, maxDegreeOfParallelism);
-        return volume;
+        };
+        return SampleSdf(batchedSdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
     static float[,,] CreateSamplingVolume(Vector3 min, Vector3 max, ref int nx, ref int ny, ref int nz, out Vector3 newMin, out float dx, out float dy, out float dz)

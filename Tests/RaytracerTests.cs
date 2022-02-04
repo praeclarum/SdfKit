@@ -13,7 +13,7 @@ public class RaytracerTests
         var w = 50;
         var h = 30;
         var r = 1.0f;
-        var sdf = Sdf.Sphere(r);
+        var sdf = Sdfs.Sphere(r);
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
         Assert.AreEqual(w, img.Width);
@@ -29,7 +29,7 @@ public class RaytracerTests
         var w = 50;
         var h = 30;
         var r = 1.0f;
-        var sdf = Sdf.Box(r);
+        var sdf = Sdfs.Box(r);
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
         Assert.AreEqual(w, img.Width);
@@ -46,8 +46,8 @@ public class RaytracerTests
         var h = 30;
         var r = 0.25f;
         var sdf = 
-            Sdf
-            .CylinderExpression(r, r*2)
+            SdfExprs
+            .Cylinder(r, r*2)
             .RepeatX(4*r)
             .ToSdf();
         var rt = new Raytracer(w, h, sdf);
@@ -64,7 +64,7 @@ public class RaytracerTests
     {
         var w = 50;
         var h = 30;
-        var sdf = Sdf.PlaneXY();
+        var sdf = Sdfs.PlaneXY();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
         Assert.AreEqual(w, img.Width);
@@ -81,8 +81,8 @@ public class RaytracerTests
         var h = 30;
         var r = 0.5f;
         var sdf = 
-            Sdf
-            .SphereExpression(r)
+            SdfExprs
+            .Sphere(r)
             .RepeatXY(2*r, 2*r)
             .ToSdf();
         var rt = new Raytracer(w, h, sdf);
@@ -97,8 +97,8 @@ public class RaytracerTests
         var h = 108;
         var r = 0.5f;
         var sdf = 
-            Sdf
-            .SphereExpression(r)
+            SdfExprs
+            .Sphere(r)
             .RepeatXY(2*r, 2*r)
             .ToSdf();
         var rt = new Raytracer(w, h, sdf);
@@ -113,13 +113,12 @@ public class RaytracerTests
         var h = 108;
         var r = 0.5f;
         var sdf = 
-            Sdf
-            .CylinderExpression(r, r/4)
+            SdfExprs
+            .Cylinder(r, r/4)
             .RepeatXY(2*r, r)
             .ToSdf();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.Render();
         img.SaveRgbTga($"CylinderRepeat_{w}x{h}.tga");
     }
-
 }

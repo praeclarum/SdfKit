@@ -12,7 +12,7 @@ public class MarchingCubesTests
     {
         var r = 1f;
         var volume = Volume.SampleSdf(
-            Sdf.Sphere(r),
+            Sdfs.Sphere(r),
             -1.5f * Vector3.One,
             1.5f * Vector3.One,
             5, 5, 5);
@@ -29,7 +29,7 @@ public class MarchingCubesTests
     {
         var r = 2f;
         var volume = Volume.SampleSdf(
-            Sdf.Sphere(r),
+            Sdfs.Sphere(r),
             -2.5f * Vector3.One,
             2.5f * Vector3.One,
             10, 10, 10);
@@ -46,7 +46,7 @@ public class MarchingCubesTests
     {
         var r = 2f;
         var volume = Volume.SampleSdf(
-            Sdf.Box(r),
+            Sdfs.Box(r),
             -2.5f * Vector3.One,
             2.5f * Vector3.One,
             10, 10, 10);
@@ -65,7 +65,7 @@ public class MarchingCubesTests
         var sw = new Stopwatch();
         sw.Start();
         var volume = Volume.SampleSdf(
-            Sdf.Cylinder(1, 3),
+            Sdfs.Cylinder(1, 3),
             new Vector3(-1.5f, -3.5f, -1.5f),
             new Vector3(1.5f, 3.5f, 1.5f),
             n, n, n);
@@ -86,7 +86,7 @@ public class MarchingCubesTests
     {
         var r = 3f;
         var volume = Volume.SampleSdf(
-            Sdf.Sphere(r),
+            Sdfs.Sphere(r),
             -3.1f * Vector3.One,
             3.1f * Vector3.One,
             128, 128, 128);

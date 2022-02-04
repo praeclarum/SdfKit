@@ -1,23 +1,25 @@
 using System.Linq.Expressions;
-using System.Reflection;
-
-using SdfAction = System.Action<System.Memory<System.Numerics.Vector3>, System.Memory<float>>;
-using SdfExpression = System.Linq.Expressions.Expression<SdfKit.SdfDelegate>;
+using SdfExpr = System.Linq.Expressions.Expression<SdfKit.SdfFunc>;
+using static SdfKit.VectorOps;
 
 namespace SdfKit;
 
-public delegate float SdfDelegate(Vector3 p);
+
+public delegate float SdfFunc(Vector3 p);
+public delegate void Sdf(System.Memory<System.Numerics.Vector3> points, System.Memory<float> distances);
+
+
+public class SdfConfig
+{
+    public const int DefaultBatchSize = 2*1024;
+}
 
 /// <summary>
 /// An abstract signed distance function with boundaries. Implement the method SampleBatch to return distances for a batch of points.
 /// </summary>
-public abstract class Sdf
+public static class SdfExtensions
 {
-    public const int DefaultBatchSize = 2 * 1024;
-
-    public abstract void SampleBatch(Memory<Vector3> points, Memory<float> distances);
-
-    public void Sample(Memory<Vector3> points, Memory<float> distances, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static void Sample(this Sdf sdf, Memory<Vector3> points, Memory<float> distances, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var ntotal = distances.Length;
         var numBatches = (ntotal + batchSize - 1) / batchSize;
@@ -30,31 +32,24 @@ public abstract class Sdf
             var endI = Math.Min(ntotal, startI + batchSize);
             var pointsSlice = points.Slice(startI, endI - startI);
             var distancesSlice = distances.Slice(startI, endI - startI);
-            SampleBatch(pointsSlice, distancesSlice);
+            sdf(pointsSlice, distancesSlice);
         });
     }
 
-    public virtual Volume CreateVolume(Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Volume CreateVolume(this Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        return Volume.SampleSdf(this, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
+        return Volume.SampleSdf(sdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
     }
 
-    public Mesh CreateMesh(Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = DefaultBatchSize, int maxDegreeOfParallelism = -1, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
+    public static Mesh CreateMesh(this Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
     {
-        var volume = CreateVolume(min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
+        var volume = CreateVolume(sdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
         return volume.CreateMesh(isoValue, step, progress);
     }
+}
 
-    public static ActionSdf FromAction(Action<Memory<Vector3>, Memory<float>> sdf)
-    {
-        return new ActionSdf(sdf);
-    }
-
-    static float VMax(Vector3 v)
-    {
-        return Math.Max(Math.Max(v.X, v.Y), v.Z);
-    }
-
+public static class Sdfs
+{
     public static Sdf Box(float bounds)
     {
         return Box(new Vector3(bounds, bounds, bounds));
@@ -62,7 +57,7 @@ public abstract class Sdf
 
     public static Sdf Box(Vector3 bounds)
     {
-        return Sdf.FromAction((ps, ds) =>
+        return (ps, ds) =>
         {
             int n = ps.Length;
             var p = ps.Span;
@@ -73,33 +68,15 @@ public abstract class Sdf
                 d[i] = Vector3.Max(wd, Vector3.Zero).Length() +
                        VMax(Vector3.Min(wd, Vector3.Zero));
             }
-        });
+        };
     }
 
-    public static SdfExpression CylinderExpression(float r, float h) =>
-        p => MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h);
-
-    public static Sdf Cylinder(float radius, float height, float padding = 0.0f)
-    {
-        var min = new Vector3(-radius - padding, 0 - padding, -radius - padding);
-        var max = new Vector3(radius + padding, height + padding, radius + padding);
-        return CylinderExpression(radius, height).ToSdf();
-        // return Sdf.FromAction((ps, ds) =>
-        // {
-        //     int n = ps.Length;
-        //     var p = ps.Span;
-        //     var d = ds.Span;
-        //     for (var i = 0; i < n; ++i)
-        //     {
-        //         var wd = MathF.Sqrt(p[i].X * p[i].X + p[i].Z * p[i].Z) - radius;
-        //         d[i] = Math.Max(wd, MathF.Abs(p[i].Y) - height);
-        //     }
-        // }, min, max);
-    }
+    public static Sdf Cylinder(float radius, float height) =>
+        SdfExprs.Cylinder(radius, height).ToSdf();
 
     public static Sdf Plane(Vector3 normal, float distanceFromOrigin)
     {
-        return Sdf.FromAction((ps, ds) =>
+        return (ps, ds) =>
         {
             int n = ps.Length;
             var p = ps.Span;
@@ -108,7 +85,7 @@ public abstract class Sdf
             {
                 d[i] = Vector3.Dot(p[i], normal) + distanceFromOrigin;
             }
-        });
+        };
     }
 
     public static Sdf PlaneXY(float z = 0)
@@ -125,12 +102,23 @@ public abstract class Sdf
             y);
     }
 
-    public static SdfExpression SphereExpression(float r) =>
-        p => p.Length() - r;
+    public static Sdf Solid(SdfFunc sdf)
+    {
+        return (ps, ds) =>
+        {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
+            for (var i = 0; i < n; ++i)
+            {
+                d[i] = sdf(p[i]);
+            }
+        };
+    }
 
     public static Sdf Sphere(float radius)
     {
-        return Sdf.FromAction((ps, ds) =>
+        return (ps, ds) =>
         {
             int n = ps.Length;
             var p = ps.Span;
@@ -139,40 +127,26 @@ public abstract class Sdf
             {
                 d[i] = p[i].Length() - radius;
             }
-        });
-    }
-
-}
-
-/// <summary>
-/// A signed distance fuction that uses an Action to implement sampling.
-/// </summary>
-public class ActionSdf : Sdf
-{
-    SdfAction sampleAction;
-
-    public ActionSdf(SdfAction action)
-    {
-        sampleAction = action;
-    }
-
-    public override void SampleBatch(Memory<Vector3> points, Memory<float> distances)
-    {
-        sampleAction(points, distances);
+        };
     }
 }
 
-public static class SdfExpressionExtensions
+public static class SdfExprs
 {
-    static float Mod(float a, float b)
-    {
-        return a - b * MathF.Floor(a / b);
-    }
+    public static SdfExpr Cylinder(float r, float h) =>
+        p => MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h);
 
-    public static SdfExpression ChangePostion(this SdfExpression sdf, Expression<Func<Vector3, Vector3>> changePosition)
+    public static SdfExpr Sphere(float r) =>
+        p => p.Length() - r;
+
+}
+
+public static class SdfExprExtensions
+{
+    public static SdfExpr ChangePostion(this SdfExpr sdf, Expression<Func<Vector3, Vector3>> changePosition)
     {
         var p = Expression.Parameter(typeof(Vector3), "p");
-        return Expression.Lambda<SdfDelegate>(
+        return Expression.Lambda<SdfFunc>(
                 Expression.Invoke(
                     sdf,
                     Expression.Invoke(
@@ -180,28 +154,24 @@ public static class SdfExpressionExtensions
                         p)),
                 new[]{p});
     }
-    public static SdfExpression RepeatX(this SdfExpression sdf, float sizeX) =>
+    public static SdfExpr RepeatX(this SdfExpr sdf, float sizeX) =>
         sdf.ChangePostion(p => new Vector3(
             Mod((p.X + sizeX*0.5f), sizeX) - sizeX*0.5f,
             p.Y,
             p.Z));
-    public static SdfExpression RepeatXY(this SdfExpression sdf, float sizeX, float sizeY)
+    public static SdfExpr RepeatXY(this SdfExpr sdf, float sizeX, float sizeY)
     {
         return sdf.ChangePostion(p => new Vector3(
             Mod((p.X + sizeX*0.5f), sizeX) - sizeX*0.5f,
             Mod((p.Y + sizeY*0.5f), sizeY) - sizeY*0.5f,
             p.Z));
     }
-    public static SdfExpression RepeatY(this SdfExpression sdf, float sizeY) =>
+    public static SdfExpr RepeatY(this SdfExpr sdf, float sizeY) =>
         sdf.ChangePostion(p => new Vector3(
             p.X,
             Mod((p.Y + sizeY*0.5f), sizeY) - sizeY*0.5f,
             p.Z));
-    public static Sdf ToSdf(this SdfExpression expression)
-    {
-        return new ActionSdf(CompileSdfAction(expression));
-    }
-    public static SdfDelegate ToSdfDelegate(this SdfExpression expression)
+    public static SdfFunc ToSdfFunc(this SdfExpr expression)
     {
         return expression.Compile();
     }
@@ -214,10 +184,10 @@ public static class SdfExpressionExtensions
     public static T SpanGetItem<T>(Span<T> span, int index) => span[index];
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static T SpanSetItem<T>(Span<T> span, int index, T value) => span[index] = value;
-    static readonly System.Reflection.MethodInfo SpanFloatGetter = typeof(SdfExpressionExtensions).GetMethod(nameof(SdfExpressionExtensions.SpanGetItem)).MakeGenericMethod(typeof(float));
-    static readonly System.Reflection.MethodInfo SpanFloatSetter = typeof(SdfExpressionExtensions).GetMethod(nameof(SdfExpressionExtensions.SpanSetItem)).MakeGenericMethod(typeof(float));
-    static readonly System.Reflection.MethodInfo SpanVector3Getter = typeof(SdfExpressionExtensions).GetMethod(nameof(SdfExpressionExtensions.SpanGetItem)).MakeGenericMethod(typeof(Vector3));
-    public static SdfAction CompileSdfAction(this SdfExpression expression)
+    static readonly System.Reflection.MethodInfo SpanFloatGetter = typeof(SdfExprExtensions).GetMethod(nameof(SdfExprExtensions.SpanGetItem)).MakeGenericMethod(typeof(float));
+    static readonly System.Reflection.MethodInfo SpanFloatSetter = typeof(SdfExprExtensions).GetMethod(nameof(SdfExprExtensions.SpanSetItem)).MakeGenericMethod(typeof(float));
+    static readonly System.Reflection.MethodInfo SpanVector3Getter = typeof(SdfExprExtensions).GetMethod(nameof(SdfExprExtensions.SpanGetItem)).MakeGenericMethod(typeof(Vector3));
+    public static Sdf ToSdf(this SdfExpr expression)
     {
         var pm = Expression.Parameter(typeof(Memory<Vector3>), "pm");
         var dm = Expression.Parameter(typeof(Memory<float>), "dm");
@@ -246,12 +216,7 @@ public static class SdfExpressionExtensions
             new[] { ps, ds, p, i, n },
             init,
             loop);
-        var lambda = Expression.Lambda<SdfAction>(body, pm, dm);
+        var lambda = Expression.Lambda<Sdf>(body, pm, dm);
         return lambda.Compile();
     }
-}
-
-public class SdfConfig
-{
-    public const int DefaultBatchSize = 2*1024;
 }

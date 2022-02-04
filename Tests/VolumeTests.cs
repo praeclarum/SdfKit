@@ -128,7 +128,7 @@ public class VolumeTests
     public void SphereWithBatchSize()
     {
         var r = 0.5f;
-        var sdf = (Memory<Vector3> ps, Memory<float> ds) => {
+        Sdf sdf = (Memory<Vector3> ps, Memory<float> ds) => {
             // Console.WriteLine($"Thread: {System.Threading.Thread.CurrentThread.ManagedThreadId}, N = {n}");
             int n = ps.Length;
             var p = ps.Span;

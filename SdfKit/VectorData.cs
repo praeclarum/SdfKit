@@ -515,9 +515,15 @@ public class Vec3Data : VectorData
 
 public static class VectorOps
 {
+    public static FloatData Dot(Vec3Data a, Vec3Data b) =>
+        a.Clone().DotInplace(b);
+
+    public static float Mod(float a, float b) =>
+        a - b * MathF.Floor(a / b);
+
     public static Vec3Data Normalize(Vec3Data xyz) =>
         xyz.Clone().NormalizeInplace();
 
-    public static FloatData Dot(Vec3Data a, Vec3Data b) =>
-        a.Clone().DotInplace(b);
+    public static float VMax(Vector3 v) =>
+        Math.Max(Math.Max(v.X, v.Y), v.Z);
 }
