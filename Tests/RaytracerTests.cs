@@ -11,13 +11,16 @@ public class RaytracerTests
     [Test]
     public void SphereDepth()
     {
+        var w = 50;
+        var h = 30;
         var r = 1.0f;
         var sdf = Sdf.CreateSphere(r);
-        var rt = new Raytracer(5, 3, sdf);
+        var rt = new Raytracer(w, h, sdf);
         using var img = rt.RenderDepth();
-        Assert.AreEqual(5, img.Width);
-        Assert.AreEqual(3, img.Height);
-        Assert.AreEqual(4.0f, img[2, 1], 1.0e-6f);
+        Assert.AreEqual(w, img.Width);
+        Assert.AreEqual(h, img.Height);
+        Assert.AreEqual(4.0f, img[w/2, h/2], 1.0e-2f);
         Assert.Greater(img[0, 0], 9.0f);
+        img.SaveTga("SphereDepth_50x30.tga", 3, 10);
     }
 }

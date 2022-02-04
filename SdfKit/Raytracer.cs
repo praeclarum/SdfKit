@@ -13,6 +13,9 @@ public class Raytracer
     readonly int height;
     readonly ArrayPool<float> pool = ArrayPool<float>.Create();
 
+    public float ZNear { get; set; } = 3.0f;
+    public float ZFar { get; set; } = 1e3f;
+
     public Raytracer(int width, int height, Sdf sdf, int batchSize = Sdf.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         this.width = width;
@@ -48,22 +51,27 @@ public class Raytracer
 
     void GetCameraRays(out Vec3Data ro, out Vec3Data rd)
     {
-        using var fragCoord = NewVec2();
-        var fragCoordV = fragCoord.Values;
+        using var uv = NewVec2();
+        var uvv = uv.Values;
+        var aspect = (float)width / height;
+        var vheight = 2.0f;
+        var vwidth = aspect * vheight;
+        var dx = vwidth / (width - 1);
+        var dy = -vheight / (height - 1);
+        var startx = -vwidth * 0.5f;
+        var starty = vheight * 0.5f;
         var i = 0;
-        for (var y = 0; y < height; ++y)
+        for (var yi = 0; yi < height; ++yi)
         {
-            for (var x = 0; x < width; ++x)
+            var y = starty + yi * dy;
+            for (var xi = 0; xi < width; ++xi)
             {
-                fragCoordV[i++] = x;
-                fragCoordV[i++] = y;
+                uvv[i++] = startx + xi * dx;
+                uvv[i++] = y;
             }
         }
-        using var uv = fragCoord / new Vector2(width-1, height-1);
-        uv.MultiplyInplace(2.0f);
-        uv.AddInplace(-1.0f);
         ro = Vec3(0, 0, 5);
-        using var nearPlane = Vec3(uv, -3);
+        using var nearPlane = Vec3(uv, -ZNear);
         rd = Normalize(nearPlane);
     }
 
@@ -72,7 +80,7 @@ public class Raytracer
     /// </summary>
     Vec3Data Render(Vec3Data ro, Vec3Data rd)
     {
-        using var t = Float(2.5f);
+        using var t = Float(ZNear - 0.1f);
         for (int i = 0; i < 10; i++) {
             using var dp = rd*t;
             dp.AddInplace(ro);
@@ -91,7 +99,7 @@ public class Raytracer
     /// </summary>
     FloatData RenderDepth(Vec3Data ro, Vec3Data rd)
     {
-        var depth = Float(2.5f);
+        var depth = Float(ZNear - 0.1f);
         for (int i = 0; i < 10; i++) {
             using var dp = rd*depth;
             dp.AddInplace(ro);
@@ -254,6 +262,38 @@ public class Raytracer
 
         public void AddInplace(FloatData other) => GenericAddInplace(other);
         public void MultiplyInplace(FloatData other) => GenericMultiplyInplace(other);
+
+        public void SaveTga(string path, float near, float far)
+        {
+            using var s = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read);
+            using var w = new System.IO.BinaryWriter(s);
+            w.Write((byte)0); // ID length
+            w.Write((byte)0); // Color map type
+            w.Write((byte)3); // Image type = Grayscale
+            // Color map specification is 5 bytes
+            w.Write((ushort)0); // Color map origin
+            w.Write((ushort)0); // Color map length
+            w.Write((byte)0); // Color map entry size
+            // Image specification is 10 bytes
+            w.Write((ushort)0); // X origin
+            w.Write((ushort)0); // Y origin
+            w.Write((ushort)Width); // Width
+            w.Write((ushort)Height); // Height
+            w.Write((byte)8); // Bits per pixel
+            w.Write((byte)0); // Image descriptor
+            for (int y = 0; y < Height; y++) {
+                for (int x = 0; x < Width; x++) {
+                    var v = this[x, y];
+                    if (v >= far) {
+                        w.Write((byte)0);
+                    } else if (v <= near) {
+                        w.Write((byte)255);
+                    } else {
+                        w.Write((byte)(255.0f * (far - v) / (far - near)));
+                    }
+                }
+            }
+        }
     }
     public class Vec2Data : FrameData
     {
