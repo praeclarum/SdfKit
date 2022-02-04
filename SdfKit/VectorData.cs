@@ -379,9 +379,7 @@ public class Vec3Data : VectorData
                 v[i++] = z*r;
             }
             else {
-                v[i++] = 0;
-                v[i++] = 0;
-                v[i++] = 0;
+                i += 3;
             }
         }
         return this;
