@@ -93,13 +93,15 @@ public class RaytracerTests
     [Test]
     public void SphereRepeat()
     {
-        var w = 192;
-        var h = 108;
+        var w = 1920;
+        var h = 1080;
         var r = 0.5f;
         var sdf = 
             SdfExprs
             .Sphere(r, new Vector3(0.8f, 0.25f, 0.65f))
-            .RepeatXY(2*r, 2*r)
+            .RepeatXY(
+                2*r, 2*r,
+                (d, c) => new Vector4(Vector3.Abs(c)/5f, d.W))
             .ToSdf();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.Render();

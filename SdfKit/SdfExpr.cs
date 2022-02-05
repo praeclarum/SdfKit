@@ -23,7 +23,7 @@ public static class SdfExprs
 
 public static class SdfExprEx
 {
-    public static SdfExpr ChangePostion(this SdfExpr sdf, Expression<Func<Vector3, Vector3>> changePosition)
+    public static SdfExpr ModifyInput(this SdfExpr sdf, Expression<Func<Vector3, Vector3>> changePosition)
     {
         var p = Expression.Parameter(typeof(Vector3), "p");
         return Expression.Lambda<SdfFunc>(
@@ -35,7 +35,7 @@ public static class SdfExprEx
                 p);
     }
 
-    public static SdfExpr ChangeResult(this SdfExpr sdf, Expression<Func<Vector4, Vector4>> changeResult)
+    public static SdfExpr ModifyOutput(this SdfExpr sdf, Expression<Func<Vector4, Vector4>> changeResult)
     {
         var p = Expression.Parameter(typeof(Vector3), "p");
         return Expression.Lambda<SdfFunc>(
@@ -47,27 +47,75 @@ public static class SdfExprEx
                 p);
     }
 
+    static readonly FieldInfo PositionOfInstance = typeof(Instance).GetField(nameof(Instance.Position));
+    static readonly FieldInfo CellOfInstance = typeof(Instance).GetField(nameof(Instance.Cell));
+
+    public static SdfExpr ModifyInputAndOutput<T>(
+        this SdfExpr sdf,
+        Expression<Func<SdfInput, Instance>> modInput,
+        Expression<Func<SdfOutput, Vector3, SdfOutput>> modOutput)
+    {
+        var p = Expression.Parameter(typeof(Vector3), "p");
+        var i = Expression.Variable(typeof(Instance), "i");
+        var mp = Expression.Variable(typeof(Vector3), "mp");
+
+        return Expression.Lambda<SdfFunc>(
+            Expression.Block(
+                new[] { i, mp },
+                Expression.Assign(i, Expression.Invoke(modInput, p)),
+                Expression.Invoke(
+                    modOutput,
+                    Expression.Invoke(
+                        sdf,
+                        Expression.Field(i, PositionOfInstance)),
+                    Expression.Field(i, CellOfInstance))),
+            new[] { p });
+    }
+
     public static SdfExpr Color(this SdfExpr sdf, Vector3 color) =>
-        sdf.ChangeResult(d => new Vector4(color, d.W));
+        sdf.ModifyOutput(d => new Vector4(color, d.W));
 
     public static SdfExpr RepeatX(this SdfExpr sdf, float sizeX) =>
-        sdf.ChangePostion(p => new Vector3(
-            Mod((p.X + sizeX*0.5f), sizeX) - sizeX*0.5f,
+        sdf.ModifyInput(p => new Vector3(
+            Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
             p.Y,
             p.Z));
 
     public static SdfExpr RepeatXY(this SdfExpr sdf, float sizeX, float sizeY)
     {
-        return sdf.ChangePostion(p => new Vector3(
-            Mod((p.X + sizeX*0.5f), sizeX) - sizeX*0.5f,
-            Mod((p.Y + sizeY*0.5f), sizeY) - sizeY*0.5f,
+        return sdf.ModifyInput(p => new Vector3(
+            Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
+            Mod((p.Y + sizeY * 0.5f), sizeY) - sizeY * 0.5f,
             p.Z));
     }
 
+    public struct Instance
+    {
+        public SdfInput Position;
+        public Vector3 Cell;
+    }
+
+    public static SdfExpr RepeatXY(this SdfExpr sdf, float sizeX, float sizeY, Expression<Func<SdfOutput, Vector3, SdfOutput>> mod)
+    {
+        return sdf.ModifyInputAndOutput<Vector2>(
+            p => new Instance
+            {
+                Position = new Vector3(
+                    Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
+                    Mod((p.Y + sizeY * 0.5f), sizeY) - sizeY * 0.5f,
+                    p.Z),
+                Cell = new Vector3(
+                    MathF.Floor((p.X + sizeX * 0.5f) / sizeX),
+                    MathF.Floor((p.Y + sizeY * 0.5f) / sizeY),
+                    0.0f),
+            },
+            mod);
+    }
+
     public static SdfExpr RepeatY(this SdfExpr sdf, float sizeY) =>
-        sdf.ChangePostion(p => new Vector3(
+        sdf.ModifyInput(p => new Vector3(
             p.X,
-            Mod((p.Y + sizeY*0.5f), sizeY) - sizeY*0.5f,
+            Mod((p.Y + sizeY * 0.5f), sizeY) - sizeY * 0.5f,
             p.Z));
 
     public static SdfFunc ToSdfFunc(this SdfExpr expression)
