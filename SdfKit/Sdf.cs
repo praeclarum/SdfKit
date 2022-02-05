@@ -3,6 +3,7 @@ using static SdfKit.VectorOps;
 namespace SdfKit;
 
 
+public delegate float SdfDistFunc(SdfInput p);
 public delegate SdfOutput SdfFunc(SdfInput p);
 public delegate void Sdf(Memory<SdfInput> points, Memory<SdfOutput> colorsAndDistances);
 
@@ -119,6 +120,22 @@ public static class Sdfs
             }
         };
     }
+
+    public static Sdf Solid(SdfDistFunc sdf, Vector3 color)
+    {
+        return (ps, ds) =>
+        {
+            int n = ps.Length;
+            var p = ps.Span;
+            var d = ds.Span;
+            for (var i = 0; i < n; ++i)
+            {
+                d[i] = new Vector4(color, sdf(p[i]));
+            }
+        };
+    }
+
+    public static Sdf Solid(SdfDistFunc sdf) => Solid(sdf, Vector3.One);
 
     public static Sdf Sphere(float radius)
     {

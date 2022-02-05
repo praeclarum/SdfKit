@@ -14,6 +14,19 @@ public static class SdfExprs
     public static SdfExpr Cylinder(float r, float h) =>
         p => new Vector4(1, 1, 1, MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h));
 
+    static readonly ConstructorInfo Vector4Ctor = typeof(Vector4).GetConstructor(new[]{typeof(Vector3),typeof(float)});
+    public static SdfExpr Solid(SdfDistExpr sdf, Vector3 color)
+    {
+        var p = Expression.Parameter(typeof(SdfInput), "p");
+        return Expression.Lambda<SdfFunc>(
+            Expression.New(Vector4Ctor,
+                Expression.Constant(color),
+                Expression.Invoke(sdf, p)),
+            p);
+    }
+
+    public static SdfExpr Solid(SdfDistExpr sdf) => Solid(sdf, Vector3.One);
+
     public static SdfExpr Sphere(float r, Vector3 color) =>
         p => new Vector4(color, p.Length() - r);
 

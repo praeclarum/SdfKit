@@ -29,11 +29,25 @@ public class SdfTests
     public void CreateMeshSphere()
     {
         var r = 0.5f;
+        var n = 32;
         var sdf = Sdfs.Sphere(r);
         var mesh = sdf.ToMesh(
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
-            128, 128, 128);
-        Assert.AreEqual(19008, mesh.Vertices.Length);
+            n, n, n);
+        Assert.AreEqual(1128, mesh.Vertices.Length);
+    }
+
+    [Test]
+    public void SolidSphere()
+    {
+        var r = 0.5f;
+        var n = 32;
+        var sdf = SdfExprs.Solid(p => p.Length() - r).ToSdf();
+        var mesh = sdf.ToMesh(
+            new Vector3(-1, -1, -1),
+            new Vector3(1, 1, 1),
+            n, n, n);
+        Assert.AreEqual(1128, mesh.Vertices.Length);
     }
 }

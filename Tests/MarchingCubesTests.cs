@@ -68,7 +68,7 @@ public class MarchingCubesTests
             -Vector3.One,
             Vector3.One,
             n, n, n);
-        volume.Clip();
+        volume.ClipToBounds();
         Assert.AreEqual(n, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj($"ClippedSphere{n}.obj");
