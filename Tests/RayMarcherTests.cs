@@ -103,10 +103,13 @@ public class RayMarcherTests
                 2.25f*r, 2.25f*r,
                 (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
             .ToSdf();
+        var sw = Stopwatch.StartNew();
         using var img = sdf.ToImage(w, h,
             new Vector3(-2, 2, 4),
             Vector3.Zero,
             Vector3.UnitY);
+        sw.Stop();
+        System.IO.File.WriteAllText("SphereRepeatTime.txt", $"Render time: {sw.ElapsedMilliseconds}ms\n");
         img.SaveTga($"SphereRepeat_{w}x{h}.tga");
     }
 

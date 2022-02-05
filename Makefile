@@ -14,6 +14,9 @@ test:
 pack:
 	dotnet pack -c Release -o ./bin/Release
 
+spheres:
+	dotnet test -v n -l "console;verbosity=detailed" --no-build --no-restore -c Release --filter "FullyQualifiedName=Tests.RayMarcherTests.SphereRepeat"
+	cat Tests/bin/Release/net6.0/SphereRepeatTime.txt
 
 
 
