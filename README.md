@@ -22,12 +22,10 @@ Each sphere's color and position are modified when repeated.
 ```csharp
 var sdf = 
     SdfExprs
-    .Sphere(0.5f, color: new Vector3(0.8f, 0.25f, 0.65f))
+    .Sphere(r)
     .RepeatXY(
-        1.25f, 1.0f,
-        (d, i) => new Vector4(
-            0.9f*Vector3.One - Vector3.Abs(i)/4f,
-            d.W + i.X/20f))
+        2.25f*r, 2.25f*r,
+        (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
     .ToSdf();
 ```
 
