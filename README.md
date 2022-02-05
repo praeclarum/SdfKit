@@ -9,7 +9,7 @@ Main features include:
 * Color sampling! SDFs don't just return the distance to the closest object, but also that object's color.
 * [`Voxels`](SdfKit/Voxels.cs) to store a regular-grid sampling of your SDF.
 * [`MarchingCubes`](SdfKit/MarchingCubes.cs) implementation to export your SDF as a solid mesh from those `Voxels`.
-* [`Raytracer`](SdfKit/Raytracer.cs) to create some sweet sweet 90s CG of your SDF in all its smooth glory. No voxels. No cubes. Just a pretty rendering of your analytic solid.
+* [`RayMarcher`](SdfKit/RayMarcher.cs) to render some sweet sweet 90s CG of your SDF in all its smooth glory. No voxels. No cubes. Just a pretty rendering of your analytic solid.
 
 ## Sample
 
