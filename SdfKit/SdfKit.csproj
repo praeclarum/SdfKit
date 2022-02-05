@@ -1,12 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>SdfKit</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>praeclarum</Authors>
+    <Description>Tools to create and manipulate signed distance fields. Includes an SDF library, Voxel sampling, Marching Cubes meshing, and Ray Marching rendering.</Description>
+    <PackageTags>SDF;3D;Graphics;Voxel;Marching Cubes;Geometry;Vector;Ray Marching</PackageTags>
+    <PackageIcon>Icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/praeclarum/SdfKit</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+
     <TargetFramework>netstandard2.1</TargetFramework>
+
     <Nullable>enable</Nullable>
     <LangVersion>10.0</LangVersion>
-
-    <PackageId>SdfKit</PackageId>
-    <Version>0.1.0</Version>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\Icon.png" Link="Icon.png" Pack="true" PackagePath="\">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
+  </ItemGroup>
 
 </Project>
