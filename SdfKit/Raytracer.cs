@@ -19,7 +19,7 @@ public class Raytracer
 
     const float GradOffset = 1e-5f;
 
-    public int DepthIterations { get; set; } = 70;
+    public int DepthIterations { get; set; } = 40;
 
     public Raytracer(int width, int height, Sdf sdf, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {

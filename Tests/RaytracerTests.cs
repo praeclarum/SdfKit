@@ -93,8 +93,8 @@ public class RaytracerTests
     [Test]
     public void SphereRepeat()
     {
-        var w = 1920;
-        var h = 1080;
+        var w = 192;
+        var h = 108;
         var r = 0.5f;
         var sdf = 
             SdfExprs

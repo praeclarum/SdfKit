@@ -10,6 +10,25 @@ Main features include:
 * `MarchingCubes` implementation to export your `Sdf` as a solid mesh.
 * `Raytracer` to create some sweet sweet 90s CGI of your `Sdf`.
 
+## Sample
+
+The following code is used to define an SDF scene of inifinitely repeating spheres.
+Each sphere's color and position are modified when repeated.
+
+```csharp
+var sdf = 
+    SdfExprs
+    .Sphere(0.5f, color: new Vector3(0.8f, 0.25f, 0.65f))
+    .RepeatXY(
+        1.25f, 1.0f,
+        (d, i) => new Vector4(
+            0.9f*Vector3.One - Vector3.Abs(i)/4f,
+            d.W + i.X/20f))
+    .ToSdf();
+```
+
+![Raytrace of Sample Code](SampleResults/SphereRepeat_1920x1080.jpg)
+
 ## Creating SDFs
 
 There are four ways to provide SDF data:
