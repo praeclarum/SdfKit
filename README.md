@@ -1,6 +1,7 @@
 # SDF Kit
 
 [![Build](https://github.com/praeclarum/SdfKit/actions/workflows/build.yml/badge.svg)](https://github.com/praeclarum/SdfKit/actions/workflows/build.yml)
+[![SdfKit on fuget.org](https://www.fuget.org/packages/SdfKit/badge.svg)](https://www.fuget.org/packages/SdfKit)
 
 Tools for manipulating signed distance functions.
 
