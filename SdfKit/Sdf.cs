@@ -57,9 +57,10 @@ public static class SdfEx
         Matrix4x4 viewTransform,
         float verticalFieldOfViewDegrees = RayMarcher.DefaultVerticalFieldOfViewDegrees,
         float nearPlaneDistance = RayMarcher.DefaultNearPlaneDistance,
-        float farPlaneDistance = RayMarcher.DefaultFarPlaneDistance)
+        float farPlaneDistance = RayMarcher.DefaultFarPlaneDistance,
+        int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        var rm = new RayMarcher(width, height, sdf) {
+        var rm = new RayMarcher(width, height, sdf, batchSize, maxDegreeOfParallelism) {
             ViewTransform = viewTransform,
             VerticalFieldOfViewDegrees = verticalFieldOfViewDegrees,
             NearPlaneDistance = nearPlaneDistance,
@@ -73,12 +74,14 @@ public static class SdfEx
         Vector3 cameraPosition, Vector3 cameraTarget, Vector3 cameraUpVector,
         float verticalFieldOfViewDegrees = RayMarcher.DefaultVerticalFieldOfViewDegrees,
         float nearPlaneDistance = RayMarcher.DefaultNearPlaneDistance,
-        float farPlaneDistance = RayMarcher.DefaultFarPlaneDistance)
+        float farPlaneDistance = RayMarcher.DefaultFarPlaneDistance,
+        int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         return ToImage(sdf,
             width, height,
             Matrix4x4.CreateLookAt(cameraPosition, cameraTarget, cameraUpVector),
-            verticalFieldOfViewDegrees, nearPlaneDistance, farPlaneDistance);
+            verticalFieldOfViewDegrees, nearPlaneDistance, farPlaneDistance,
+            batchSize, maxDegreeOfParallelism);
     }
 }
 
