@@ -1,5 +1,7 @@
 # SDF Kit
 
+[![Build](https://github.com/praeclarum/SdfKit/actions/workflows/build.yml/badge.svg)](https://github.com/praeclarum/SdfKit/actions/workflows/build.yml)
+
 Tools for manipulating signed distance functions.
 
 Main features include:
