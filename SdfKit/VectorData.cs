@@ -14,7 +14,7 @@ public class VectorData : IDisposable
 
     public Memory<float> FloatMemory => Values.AsMemory(0, Length);
 
-    public VectorData(int width, int height, int dim, ArrayPool<float> pool)
+    protected VectorData(int width, int height, int dim, ArrayPool<float> pool)
     {
         this.Width = width;
         this.Height = height;
@@ -111,10 +111,14 @@ public class VectorData : IDisposable
 
 public class FloatData : VectorData
 {
-    public float this[int x, int y] => Values[y*Width + x];
+    public float this[int x, int y]
+    {
+        get => Values[y * Width + x];
+        set => Values[y * Width + x] = value;
+    }
 
-    public FloatData(int width, int height, ArrayPool<float> pool) 
-        : base(width, height, 1, pool)
+    public FloatData(int width, int height, ArrayPool<float>? pool = null)
+        : base(width, height, 1, pool ?? ArrayPool<float>.Shared)
     {
     }
 
@@ -217,7 +221,7 @@ public class FloatData : VectorData
         w.Write((ushort)Width); // Width
         w.Write((ushort)Height); // Height
         w.Write((byte)8); // Bits per pixel
-        w.Write((byte)0); // Image descriptor
+        w.Write((byte)0b00100000); // Image descriptor
         for (int y = 0; y < Height; y++) {
             for (int x = 0; x < Width; x++) {
                 var v = this[x, y];
@@ -237,8 +241,8 @@ public class Vec2Data : VectorData
 {
     public Memory<Vector2> Vector2Memory => MemoryUtils.Cast<float, Vector2>(FloatMemory);
 
-    public Vec2Data(int width, int height, ArrayPool<float> pool) 
-        : base(width, height, 2, pool)
+    public Vec2Data(int width, int height, ArrayPool<float>? pool = null)
+        : base(width, height, 2, pool ?? ArrayPool<float>.Shared)
     {
     }
     public Vec2Data(Vec2Data other)
@@ -344,8 +348,8 @@ public class Vec3Data : VectorData
         }
     }
 
-    public Vec3Data(int width, int height, ArrayPool<float> pool) 
-        : base(width, height, 3, pool)
+    public Vec3Data(int width, int height, ArrayPool<float>? pool = null)
+        : base(width, height, 3, pool ?? ArrayPool<float>.Shared)
     {
     }
 
@@ -503,7 +507,7 @@ public class Vec3Data : VectorData
         return this;
     }
 
-    public void SaveRgbTga(string path)
+    public void SaveTga(string path)
     {
         using var s = new System.IO.FileStream(path, System.IO.FileMode.Create, System.IO.FileAccess.Write, System.IO.FileShare.Read);
         using var w = new System.IO.BinaryWriter(s);
@@ -520,7 +524,7 @@ public class Vec3Data : VectorData
         w.Write((ushort)Width); // Width
         w.Write((ushort)Height); // Height
         w.Write((byte)24); // Bits per pixel
-        w.Write((byte)0); // Image descriptor
+        w.Write((byte)0b00100000); // Image descriptor
         for (int y = 0; y < Height; y++) {
             for (int x = 0; x < Width; x++) {
                 var v = this[x, y] * 255.0f;
@@ -564,8 +568,8 @@ public class Vec4Data : VectorData
         }
     }
 
-    public Vec4Data(int width, int height, ArrayPool<float> pool) 
-        : base(width, height, 4, pool)
+    public Vec4Data(int width, int height, ArrayPool<float>? pool = null)
+        : base(width, height, 4, pool ?? ArrayPool<float>.Shared)
     {
     }
 

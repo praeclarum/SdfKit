@@ -100,16 +100,16 @@ public class RayMarcherTests
             SdfExprs
             .Sphere(r, color: new Vector3(0.8f, 0.25f, 0.65f))
             .RepeatXY(
-                2.5f*r, 2*r,
+                2.25f*r, 2.25f*r,
                 (d, i) => new Vector4(
-                    0.9f*Vector3.One - Vector3.Abs(i)/4f,
-                    d.W + i.X/20f))
+                    0.9f*Vector3.One - Vector3.Abs(i)/6f,
+                    d.W))
             .ToSdf();
         using var img = sdf.ToImage(w, h,
-            new Vector3(0, 0, 4),
+            new Vector3(-2, 2, 4),
             Vector3.Zero,
             Vector3.UnitY);
-        img.SaveRgbTga($"SphereRepeat_{w}x{h}.tga");
+        img.SaveTga($"SphereRepeat_{w}x{h}.tga");
     }
 
     [Test]
@@ -125,6 +125,6 @@ public class RayMarcherTests
             .ToSdf();
         var rt = new RayMarcher(w, h, sdf);
         using var img = rt.Render();
-        img.SaveRgbTga($"CylinderRepeat_{w}x{h}.tga");
+        img.SaveTga($"CylinderRepeat_{w}x{h}.tga");
     }
 }
