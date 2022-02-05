@@ -6,6 +6,11 @@ namespace SdfKit;
 
 public class RayMarcher
 {
+    public const float DefaultNearPlaneDistance = 1.0f;
+    public const float DefaultFarPlaneDistance = 100.0f;
+    public const float DefaultVerticalFieldOfViewDegrees = 60.0f;
+    public const int DefaultDepthIterations = 40;
+
     readonly Sdf sdf;
     readonly int batchSize;
     readonly int maxDegreeOfParallelism;
@@ -17,15 +22,13 @@ public class RayMarcher
     public Matrix4x4 ViewTransform { get; set; } = 
         Matrix4x4.CreateLookAt(new Vector3(0, 0, 5), Vector3.Zero, Vector3.UnitY);
 
-    public float NearPlaneDistance { get; set; } = 1.0f;
-    public float FarPlaneDistance { get; set; } = 100.0f;
-
-    public float VerticalFieldOfViewDegrees { get; set; } = 60.0f;
+    public float NearPlaneDistance { get; set; } = DefaultNearPlaneDistance;
+    public float FarPlaneDistance { get; set; } = DefaultFarPlaneDistance;
+    public float VerticalFieldOfViewDegrees { get; set; } = DefaultVerticalFieldOfViewDegrees;
 
     const float GradOffset = 1e-5f;
 
-    public int DepthIterations { get; set; } = 40;
-
+    public int DepthIterations { get; set; } = DefaultDepthIterations;
 
     public RayMarcher(int width, int height, Sdf sdf, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {

@@ -105,12 +105,10 @@ public class RayMarcherTests
                     0.9f*Vector3.One - Vector3.Abs(i)/4f,
                     d.W + i.X/20f))
             .ToSdf();
-        var rt = new RayMarcher(w, h, sdf);
-        rt.ViewTransform = Matrix4x4.CreateLookAt(
+        using var img = sdf.ToImage(w, h,
             new Vector3(0, 0, 4),
-            new Vector3(0, 0, 0),
-            new Vector3(0, 1, 0));
-        using var img = rt.Render();
+            Vector3.Zero,
+            Vector3.UnitY);
         img.SaveRgbTga($"SphereRepeat_{w}x{h}.tga");
     }
 

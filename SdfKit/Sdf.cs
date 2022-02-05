@@ -51,6 +51,35 @@ public static class SdfEx
         var voxels = ToVoxels(sdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism, clipToBounds);
         return voxels.ToMesh(isoValue, step, progress);
     }
+
+    public static Vec3Data ToImage(this Sdf sdf,
+        int width, int height,
+        Matrix4x4 viewTransform,
+        float verticalFieldOfViewDegrees = RayMarcher.DefaultVerticalFieldOfViewDegrees,
+        float nearPlaneDistance = RayMarcher.DefaultNearPlaneDistance,
+        float farPlaneDistance = RayMarcher.DefaultFarPlaneDistance)
+    {
+        var rm = new RayMarcher(width, height, sdf) {
+            ViewTransform = viewTransform,
+            VerticalFieldOfViewDegrees = verticalFieldOfViewDegrees,
+            NearPlaneDistance = nearPlaneDistance,
+            FarPlaneDistance = farPlaneDistance,
+        };
+        return rm.Render();
+    }
+
+    public static Vec3Data ToImage(this Sdf sdf,
+        int width, int height,
+        Vector3 cameraPosition, Vector3 cameraTarget, Vector3 cameraUpVector,
+        float verticalFieldOfViewDegrees = RayMarcher.DefaultVerticalFieldOfViewDegrees,
+        float nearPlaneDistance = RayMarcher.DefaultNearPlaneDistance,
+        float farPlaneDistance = RayMarcher.DefaultFarPlaneDistance)
+    {
+        return ToImage(sdf,
+            width, height,
+            Matrix4x4.CreateLookAt(cameraPosition, cameraTarget, cameraUpVector),
+            verticalFieldOfViewDegrees, nearPlaneDistance, farPlaneDistance);
+    }
 }
 
 public static class Sdfs
