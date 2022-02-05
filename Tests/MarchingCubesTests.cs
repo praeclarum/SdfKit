@@ -55,6 +55,7 @@ public class MarchingCubesTests
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj($"UnclippedSphere{n}.obj");
         Assert.AreEqual(0, mesh.Vertices.Length);
+        Assert.AreEqual(0, mesh.Triangles.Length);
     }
 
     [Test]
@@ -71,9 +72,9 @@ public class MarchingCubesTests
         Assert.AreEqual(n, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj($"ClippedSphere{n}.obj");
-        Assert.AreEqual(0, mesh.Vertices.Length);
+        Assert.AreEqual(384, mesh.Vertices.Length);
         Assert.AreEqual(mesh.Center.Length(), 0.0f, 1e-6f);
-        Assert.AreEqual(r, mesh.Size.X/2f, 1e-1f);
+        Assert.AreEqual(2.0f, mesh.Size.X, 1e-1f);
     }
 
     [Test]

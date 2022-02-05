@@ -34,7 +34,7 @@ public class Volume : IBoundedVolume
         set => Values[x, y, z] = value;
     }
 
-    public Mesh CreateMesh(float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
+    public Mesh ToMesh(float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
     {
         return MarchingCubes.CreateMesh(this, isoValue, step, progress);
     }
