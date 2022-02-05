@@ -21,7 +21,7 @@ public class SdfTests
                 d[i] = new Vector4(1, 1, 1, p[i].Length() - r);
             }
         };
-        var v = sdf.ToVolume(new Vector3(-1, -1, -1), new Vector3(1, 1, 1), 128, 128, 128);
+        var v = sdf.ToVoxels(new Vector3(-1, -1, -1), new Vector3(1, 1, 1), 128, 128, 128);
         Assert.AreEqual(-0.5f, v[63, 63, 63], 2.0e-2f);
     }
 

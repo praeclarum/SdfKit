@@ -35,20 +35,20 @@ public static class SdfEx
         });
     }
 
-    public static Volume ToVolume(this Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1, bool clipToVolume = true)
+    public static Voxels ToVoxels(this Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1, bool clipToBounds = true)
     {
-        var volume = Volume.SampleSdf(sdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
-        if (clipToVolume)
+        var voxels = Voxels.SampleSdf(sdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
+        if (clipToBounds)
         {
-            volume.Clip();
+            voxels.ClipToBounds();
         }
-        return volume;
+        return voxels;
     }
 
-    public static Mesh ToMesh(this Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1, bool clipToVolume = true, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
+    public static Mesh ToMesh(this Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1, bool clipToBounds = true, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
     {
-        var volume = ToVolume(sdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism, clipToVolume);
-        return volume.ToMesh(isoValue, step, progress);
+        var voxels = ToVoxels(sdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism, clipToBounds);
+        return voxels.ToMesh(isoValue, step, progress);
     }
 }
 

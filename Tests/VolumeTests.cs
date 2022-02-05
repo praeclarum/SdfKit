@@ -11,7 +11,7 @@ public class VolumeTests
     public void Empty()
     {
         var sdf = (Vector3 p) => 0.0f;
-        var v = new Volume(
+        var v = new Voxels(
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             5, 7, 11);
@@ -27,7 +27,7 @@ public class VolumeTests
     public void ZeroSdf()
     {
         var sdf = (Vector3 p) => Vector4.Zero;
-        var v = Volume.SampleSdf(
+        var v = Voxels.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
@@ -46,7 +46,7 @@ public class VolumeTests
             Assert.AreEqual(0.0f, p.Z, 0.001f);
             return Vector4.One;
         };
-        var v = Volume.SampleSdf(
+        var v = Voxels.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
@@ -66,7 +66,7 @@ public class VolumeTests
             Assert.AreEqual(1.0f, Math.Abs(p.Z), 0.001f);
             return Vector4.One;
         };
-        var v = Volume.SampleSdf(
+        var v = Voxels.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
@@ -87,7 +87,7 @@ public class VolumeTests
             }
             return Vector4.One;
         };
-        var v = Volume.SampleSdf(
+        var v = Voxels.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
@@ -103,7 +103,7 @@ public class VolumeTests
     {
         var r = 0.5f;
         var sdf = (Vector3 p) => new Vector4(1, 1, 1, p.Length() - r);
-        var v = Volume.SampleSdf(
+        var v = Voxels.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
@@ -116,7 +116,7 @@ public class VolumeTests
     {
         var r = 0.5f;
         var sdf = (Vector3 p) => new Vector4(1, 1, 1, p.Length() - r);
-        var v = Volume.SampleSdf(
+        var v = Voxels.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
@@ -142,7 +142,7 @@ public class VolumeTests
         };
         var sw = new Stopwatch();
         sw.Start();
-        var v = Volume.SampleSdf(
+        var v = Voxels.SampleSdf(
             sdf,
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),

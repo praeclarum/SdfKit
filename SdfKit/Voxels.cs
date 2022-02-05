@@ -3,7 +3,7 @@ namespace SdfKit;
 /// <summary>
 /// A regular 3D grid of distance values.
 /// </summary>
-public class Volume : IBoundedVolume
+public class Voxels : IBoundedVolume
 {
     public readonly float[,,] Values;
     public int NX => Values.GetLength(0);
@@ -16,14 +16,14 @@ public class Volume : IBoundedVolume
     public Vector3 Size => Max - Min;
     public float Radius => (Max - Min).Length() * 0.5f;
 
-    public Volume(float[,,] values, Vector3 min, Vector3 max)
+    public Voxels(float[,,] values, Vector3 min, Vector3 max)
     {
         Values = values;
         Min = min;
         Max = max;
     }
 
-    public Volume(Vector3 min, Vector3 max, int nx, int ny, int nz)
+    public Voxels(Vector3 min, Vector3 max, int nx, int ny, int nz)
         : this(CreateSamplingVolume(min, max, ref nx, ref ny, ref nz, out var newMin, out var dx, out var dy, out var dz), min, max)
     {
     }
@@ -41,7 +41,7 @@ public class Volume : IBoundedVolume
 
     public void SampleSdf(Sdf sdf, int batchSize =SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        var volume = Values;
+        var voxels = Values;
         var nx = NX;
         var ny = NY;
         var nz = NZ;
@@ -84,7 +84,7 @@ public class Volume : IBoundedVolume
                 var ix = i % nx;
                 var iy = (i / nx) % ny;
                 var iz = i / (nx * ny);
-                volume[ix, iy, iz] = values[i - startI].W;
+                voxels[ix, iy, iz] = values[i - startI].W;
             }
             return pvs;
         }, x => {
@@ -98,9 +98,9 @@ public class Volume : IBoundedVolume
     /// Clipping is accomplished by overwriting the volume's outer wall
     /// to be "outside" values equal to a cell's size.
     /// </summary>
-    public void Clip()
+    public void ClipToBounds()
     {
-        var volume = Values;
+        var voxels = Values;
         var nx = NX;
         var ny = NY;
         var nz = NZ;
@@ -110,8 +110,8 @@ public class Volume : IBoundedVolume
         {
             for (int iz = 0; iz < nz; iz++)
             {
-                volume[0, iy, iz] = outsideValue;
-                volume[nx - 1, iy, iz] = outsideValue;
+                voxels[0, iy, iz] = outsideValue;
+                voxels[nx - 1, iy, iz] = outsideValue;
             }
         }
         // Y = 0 and Y = ny - 1 sides
@@ -119,8 +119,8 @@ public class Volume : IBoundedVolume
         {
             for (int iz = 0; iz < nz; iz++)
             {
-                volume[ix, 0, iz] = outsideValue;
-                volume[ix, ny - 1, iz] = outsideValue;
+                voxels[ix, 0, iz] = outsideValue;
+                voxels[ix, ny - 1, iz] = outsideValue;
             }
         }
         // Z = 0 and Z = nz - 1 sides
@@ -128,20 +128,20 @@ public class Volume : IBoundedVolume
         {
             for (int iy = 0; iy < ny; iy++)
             {
-                volume[ix, iy, 0] = outsideValue;
-                volume[ix, iy, nz - 1] = outsideValue;
+                voxels[ix, iy, 0] = outsideValue;
+                voxels[ix, iy, nz - 1] = outsideValue;
             }
         }
     }
 
-    public static Volume SampleSdf(Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Voxels SampleSdf(Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
-        var volume = new Volume(min, max, nx, ny, nz);
-        volume.SampleSdf(sdf, batchSize, maxDegreeOfParallelism);
-        return volume;
+        var voxels = new Voxels(min, max, nx, ny, nz);
+        voxels.SampleSdf(sdf, batchSize, maxDegreeOfParallelism);
+        return voxels;
     }
 
-    public static Volume SampleSdf(Func<Vector3, Vector4> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
+    public static Voxels SampleSdf(Func<Vector3, Vector4> sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         Sdf batchedSdf = (Memory<Vector3> positions, Memory<Vector4> values) =>
         {

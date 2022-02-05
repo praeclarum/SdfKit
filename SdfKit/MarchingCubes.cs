@@ -36,7 +36,7 @@ public static class MarchingCubes
 {
     const double FLT_EPSILON = 0.0000001;
 
-    public static Mesh CreateMesh(Volume volume, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
+    public static Mesh CreateMesh(Voxels volume, float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
     {
         int nx = volume.NX;
         int ny = volume.NY;

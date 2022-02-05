@@ -4,11 +4,12 @@ Tools for manipulating signed distance functions.
 
 Main features include:
 
-* `Sdfs` and `SdfExprs` library of combinable primitive shapes and modifiers.
-* Multi-threaded batched sampling of the `Sdf` for the perf perf perf.
-* A bounded `Volume` class for creating voxels from your `Sdf`.
-* `MarchingCubes` implementation to export your `Sdf` as a solid mesh.
-* `Raytracer` to create some sweet sweet 90s CGI of your `Sdf`.
+* [`Sdfs`](SdfKit/Sdf.cs) and [`SdfExprs`](SdfKit/SdfExpr.cs) libraries of combinable primitive shapes and modifiers.
+* Multi-threaded batched sampling of the SDF for the perf perf perf.
+* Color sampling! SDFs don't just return the distance to the closest object, but also that object's color.
+* [`Voxels`](SdfKit/Voxels.cs) to store a regular-grid sampling of your SDF.
+* [`MarchingCubes`](SdfKit/MarchingCubes.cs) implementation to export your SDF as a solid mesh from those `Voxels`.
+* [`Raytracer`](SdfKit/Raytracer.cs) to create some sweet sweet 90s CG of your SDF in all its smooth glory. No voxels. No cubes. Just a pretty rendering of your analytic solid.
 
 ## Sample
 
@@ -42,7 +43,7 @@ There are four ways to provide SDF data:
         var d = ds.Span;
         for (var i = 0; i < n; ++i)
         {
-            d[i] = p[i].Length() - radius;
+            d[i] = p[i].Length() - 1.0f;
         }
     };
     ```
@@ -50,13 +51,13 @@ There are four ways to provide SDF data:
 2. **Provide the SDF yourself** using `Sdfs.Solid`.
 
     ```csharp
-    Sdf sphere = Sdfs.Solid(p => p.Length() - 1.0);
+    Sdf sphere = Sdfs.Solid(p => p.Length() - 1.0f);
     ```
 
 3. **Use some of the built-in SDFs** that are in the static class `Sdfs`.
 
     ```csharp
-    Sdf sphere = Sdfs.Sphere(1.0);
+    Sdf sphere = Sdfs.Sphere(1.0f);
     ```
 
 4. **Use SDF Expressions to build the SDF** using the members of `SdfExprs`. This method makes it easy to build varied and efficient SDFs using a fluent syntax.
