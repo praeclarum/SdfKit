@@ -42,6 +42,41 @@ public class MarchingCubesTests
     }
 
     [Test]
+    public void UnclippedSphere10()
+    {
+        var n = 10;
+        var r = 2f;
+        var volume = Volume.SampleSdf(
+            Sdfs.Sphere(r),
+            -Vector3.One,
+            Vector3.One,
+            n, n, n);
+        Assert.AreEqual(n, volume.NX);
+        var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
+        mesh.WriteObj($"UnclippedSphere{n}.obj");
+        Assert.AreEqual(0, mesh.Vertices.Length);
+    }
+
+    [Test]
+    public void ClippedSphere10()
+    {
+        var n = 10;
+        var r = 2f;
+        var volume = Volume.SampleSdf(
+            Sdfs.Sphere(r),
+            -Vector3.One,
+            Vector3.One,
+            n, n, n);
+        volume.Clip();
+        Assert.AreEqual(n, volume.NX);
+        var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
+        mesh.WriteObj($"ClippedSphere{n}.obj");
+        Assert.AreEqual(0, mesh.Vertices.Length);
+        Assert.AreEqual(mesh.Center.Length(), 0.0f, 1e-6f);
+        Assert.AreEqual(r, mesh.Size.X/2f, 1e-1f);
+    }
+
+    [Test]
     public void Box10()
     {
         var r = 2f;

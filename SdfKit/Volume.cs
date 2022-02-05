@@ -92,6 +92,48 @@ public class Volume : IBoundedVolume
         });
     }
 
+    /// <summary>
+    /// Clip the solid to the walls of this volume.
+    /// This ensures that meshing the object will produce a solid object.
+    /// Clipping is accomplished by overwriting the volume's outer wall
+    /// to be "outside" values equal to a cell's size.
+    /// </summary>
+    public void Clip()
+    {
+        var volume = Values;
+        var nx = NX;
+        var ny = NY;
+        var nz = NZ;
+        float outsideValue = Size.X / NX;
+        // X = 0 and X = nx - 1 sides
+        for (int iy = 0; iy < ny; iy++)
+        {
+            for (int iz = 0; iz < nz; iz++)
+            {
+                volume[0, iy, iz] = outsideValue;
+                volume[nx - 1, iy, iz] = outsideValue;
+            }
+        }
+        // Y = 0 and Y = ny - 1 sides
+        for (int ix = 0; ix < nx; ix++)
+        {
+            for (int iz = 0; iz < nz; iz++)
+            {
+                volume[ix, 0, iz] = outsideValue;
+                volume[ix, ny - 1, iz] = outsideValue;
+            }
+        }
+        // Z = 0 and Z = nz - 1 sides
+        for (int ix = 0; ix < nx; ix++)
+        {
+            for (int iy = 0; iy < ny; iy++)
+            {
+                volume[ix, iy, 0] = outsideValue;
+                volume[ix, iy, nz - 1] = outsideValue;
+            }
+        }
+    }
+
     public static Volume SampleSdf(Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var volume = new Volume(min, max, nx, ny, nz);
