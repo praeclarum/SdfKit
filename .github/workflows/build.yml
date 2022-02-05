@@ -1,0 +1,43 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - uses: actions/checkout@v2
+
+    - name: Update Versions
+      env:
+        VERSION_PREFIX: 0.1
+        VERSION_SUFFIX: ${{github.run_number}}
+      run: |
+        VERSION=$VERSION_PREFIX.$VERSION_SUFFIX
+        sed -i bak "s:<Version>1.0.0</Version>:<Version>$VERSION</Version>:g" SdfKit/SdfKit.csproj
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.101
+
+    - name: Restore
+      run: make restore
+    - name: Build
+      run: make build
+    - name: Test
+      run: make test
+
+    - name: Pack
+      run: make pack
+    - name: Store Package on GitHub
+      uses: actions/upload-artifact@master
+      with:
+        path: bin/Release

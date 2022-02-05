@@ -2,6 +2,9 @@
 
 all: build
 
+restore:
+	dotnet restore
+
 build:
 	dotnet build -c Release
 
