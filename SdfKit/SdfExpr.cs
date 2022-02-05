@@ -187,8 +187,13 @@ static class SdfExprCompiler
     static readonly MethodInfo SpanOutputSetter = typeof(SdfExprCompiler).GetMethod(nameof(SdfExprCompiler.SpanSetItem)).MakeGenericMethod(typeof(SdfOutput));
     static readonly MethodInfo SpanInputGetter = typeof(SdfExprCompiler).GetMethod(nameof(SdfExprCompiler.SpanGetItem)).MakeGenericMethod(typeof(SdfInput));
 
-
     public static Sdf Compile(SdfExpr expression)
+    {
+        var lambda = CreateBatchedLambda(expression);
+        return lambda.Compile(preferInterpretation: false);
+    }
+
+    static Expression<Sdf> CreateBatchedLambda(SdfExpr expression)
     {
         var pm = Expression.Parameter(typeof(Memory<SdfInput>), "pm");
         var dm = Expression.Parameter(typeof(Memory<SdfOutput>), "dm");
@@ -218,6 +223,7 @@ static class SdfExprCompiler
             init,
             loop);
         var lambda = Expression.Lambda<Sdf>(body, pm, dm);
-        return lambda.Compile();
+        return lambda;
     }
+
 }
