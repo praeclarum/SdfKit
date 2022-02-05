@@ -616,6 +616,9 @@ public static class VectorOps
     public static FloatData Dot(Vec3Data a, Vec3Data b) =>
         a.Clone().DotInplace(b);
 
+    /// <summary>
+    /// Modulus using the floor method vs .NET's trunc method.
+    /// </summary>
     public static float Mod(float a, float b) =>
         a - b * MathF.Floor(a / b);
 

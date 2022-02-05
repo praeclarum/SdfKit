@@ -17,6 +17,8 @@ public class Raytracer
     public float ZNear { get; set; } = 3.0f;
     public float ZFar { get; set; } = 1e3f;
 
+    const float GradOffset = 1e-5f;
+
     public int DepthIterations { get; set; } = 70;
 
     public Raytracer(int width, int height, Sdf sdf, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
@@ -128,8 +130,6 @@ public class Raytracer
         var fragColor = fg + bg;
         return fragColor;
     }
-
-    const float GradOffset = 1e-4f;
 
     static readonly Vector3[] GradOffsets = {
         GradOffset * Vector3.UnitX,
