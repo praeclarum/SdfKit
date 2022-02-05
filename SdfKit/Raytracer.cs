@@ -17,7 +17,7 @@ public class Raytracer
     public float ZNear { get; set; } = 3.0f;
     public float ZFar { get; set; } = 1e3f;
 
-    public int DepthIterations { get; set; } = 40;
+    public int DepthIterations { get; set; } = 70;
 
     public Raytracer(int width, int height, Sdf sdf, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
@@ -118,12 +118,13 @@ public class Raytracer
         using var diffuseValue =
             Dot(surfaceNormal, lightDirection)
             .MaxInplace(0.0f);
-        using var diffuse = diffuseValue * diffuseColor;
+        using var lighting = diffuseValue * diffuseColor;
+        lighting.AddInplace(0.1f);
         // Calculate the color
         using var bgMask = depth > 9.0f;
         using var bg = bgMask * new Vector3(0.5f, 0.75f, 1.0f);
         bgMask.NotInplace();
-        using var fg = bgMask * diffuse;
+        using var fg = bgMask * lighting;
         var fragColor = fg + bg;
         return fragColor;
     }

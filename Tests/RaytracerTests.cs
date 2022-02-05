@@ -98,10 +98,12 @@ public class RaytracerTests
         var r = 0.5f;
         var sdf = 
             SdfExprs
-            .Sphere(r, new Vector3(0.8f, 0.25f, 0.65f))
+            .Sphere(r, color: new Vector3(0.8f, 0.25f, 0.65f))
             .RepeatXY(
                 2*r, 2*r,
-                (d, c) => new Vector4(Vector3.Abs(c)/5f, d.W))
+                (d, i) => new Vector4(
+                    0.9f*Vector3.One - Vector3.Abs(i)/4f,
+                    d.W + i.X/20f))
             .ToSdf();
         var rt = new Raytracer(w, h, sdf);
         using var img = rt.Render();
