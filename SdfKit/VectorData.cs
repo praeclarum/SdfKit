@@ -336,6 +336,12 @@ public class Vec3Data : VectorData
             var i = (y*Width + x)*3;
             return new Vector3(Values[i], Values[i+1], Values[i+2]);
         }
+        set {
+            var i = (y*Width + x)*3;
+            Values[i] = value.X;
+            Values[i+1] = value.Y;
+            Values[i+2] = value.Z;
+        }
     }
 
     public Vec3Data(int width, int height, ArrayPool<float> pool) 

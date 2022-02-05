@@ -93,8 +93,8 @@ public class RayMarcherTests
     [Test]
     public void SphereRepeat()
     {
-        var w = 192;
-        var h = 108;
+        var w = 1920;
+        var h = 1080;
         var r = 0.5f;
         var sdf = 
             SdfExprs
@@ -106,6 +106,10 @@ public class RayMarcherTests
                     d.W + i.X/20f))
             .ToSdf();
         var rt = new RayMarcher(w, h, sdf);
+        rt.ViewTransform = Matrix4x4.CreateLookAt(
+            new Vector3(0, 0, 4),
+            new Vector3(0, 0, 0),
+            new Vector3(0, 1, 0));
         using var img = rt.Render();
         img.SaveRgbTga($"SphereRepeat_{w}x{h}.tga");
     }

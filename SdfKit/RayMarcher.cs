@@ -14,12 +14,18 @@ public class RayMarcher
     readonly int height;
     readonly ArrayPool<float> pool = ArrayPool<float>.Create();
 
-    public float ZNear { get; set; } = 3.0f;
-    public float ZFar { get; set; } = 1e3f;
+    public Matrix4x4 ViewTransform { get; set; } = 
+        Matrix4x4.CreateLookAt(new Vector3(0, 0, 5), Vector3.Zero, Vector3.UnitY);
+
+    public float NearPlaneDistance { get; set; } = 1.0f;
+    public float FarPlaneDistance { get; set; } = 100.0f;
+
+    public float VerticalFieldOfViewDegrees { get; set; } = 60.0f;
 
     const float GradOffset = 1e-5f;
 
     public int DepthIterations { get; set; } = 40;
+
 
     public RayMarcher(int width, int height, Sdf sdf, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
@@ -59,7 +65,7 @@ public class RayMarcher
     /// </summary>
     FloatData RenderDepth(Vec3Data rayOrigin, Vec3Data rayDir)
     {
-        var depth = Float(ZNear - 0.1f);
+        var depth = Float(NearPlaneDistance - 0.1f);
         for (int i = 0; i < DepthIterations; i++) {
             using var samplePos = rayDir*depth;
             samplePos.AddInplace(rayOrigin);
@@ -69,30 +75,41 @@ public class RayMarcher
         return depth;
     }
 
-    void GetCameraRays(out Vec3Data ro, out Vec3Data rd)
+    void GetCameraRays(out Vec3Data rayOrigin, out Vec3Data rayDirection)
     {
-        using var uv = NewVec2();
-        var uvv = uv.Values;
-        var aspect = (float)width / height;
-        var vheight = 2.0f;
-        var vwidth = aspect * vheight;
-        var dx = vwidth / (width - 1);
-        var dy = -vheight / (height - 1);
-        var startx = -vwidth * 0.5f;
-        var starty = vheight * 0.5f;
-        var i = 0;
-        for (var yi = 0; yi < height; ++yi)
-        {
-            var y = starty + yi * dy;
-            for (var xi = 0; xi < width; ++xi)
-            {
-                uvv[i++] = startx + xi * dx;
-                uvv[i++] = y;
+        Matrix4x4.Invert(ViewTransform, out var cameraTransform);
+        var cameraPosition = Vector3.Transform(Vector3.Zero, cameraTransform);
+        rayOrigin = NewVec3(cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
+
+        var projectionTransform = Matrix4x4.CreatePerspectiveFieldOfView(
+            VerticalFieldOfViewDegrees * MathF.PI / 180.0f,
+            (float)width / height,
+            NearPlaneDistance,
+            FarPlaneDistance);
+
+        var viewProjectionTransform = ViewTransform * projectionTransform;
+        Matrix4x4.Invert(viewProjectionTransform, out var viewProjectionInverse);
+        Vector3 GetDirection(float x, float y, float z = 0) {
+            var vv = new Vector4(x, y, z, 1);
+            var vvv = Vector4.Transform(vv, viewProjectionInverse);
+            var pos = new Vector3(vvv.X/vvv.W, vvv.Y/vvv.W, vvv.Z/vvv.W);
+            var d = pos - cameraPosition;
+            return Vector3.Normalize(d);
+        }
+        var topLeft = GetDirection(-1, 1);
+        var topRight = GetDirection(1, 1);
+        var bottomLeft = GetDirection(-1, -1);
+        var bottomRight = GetDirection(1, -1);
+        var center = GetDirection(0, 0);
+        rayDirection = NewVec3();
+        for (int j = 0; j < height; j++) {
+            var y = 1.0f - 2.0f * (float)j / (height - 1);
+            for (int i = 0; i < width; i++) {
+                var x = -1.0f + 2.0f * (float)i / (width - 1);
+                var dir = GetDirection(x, y);
+                rayDirection[i, j] = dir;
             }
         }
-        ro = NewVec3(0, 0, 5);
-        using var nearPlane = Vec3(uv, -ZNear);
-        rd = Normalize(nearPlane);
     }
 
     /// <summary>
@@ -101,7 +118,7 @@ public class RayMarcher
     Vec3Data Render(Vec3Data rayOrigin, Vec3Data rayDir)
     {
         // Find surface intersection for every ray.
-        using var depth = Float(ZNear - 0.1f);
+        using var depth = Float(NearPlaneDistance - 0.1f);
         using var diffuseColor = NewVec3(0.0f, 0.0f, 0.0f);
         for (int i = 0; i < DepthIterations; i++) {
             using var samplePos = rayDir*depth;
@@ -123,7 +140,7 @@ public class RayMarcher
         using var lighting = diffuseValue * diffuseColor;
         lighting.AddInplace(0.1f);
         // Calculate the color
-        using var bgMask = depth > 9.0f;
+        using var bgMask = depth > FarPlaneDistance;
         using var bg = bgMask * new Vector3(0.5f, 0.75f, 1.0f);
         bgMask.NotInplace();
         using var fg = bgMask * lighting;
