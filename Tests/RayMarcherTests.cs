@@ -98,12 +98,10 @@ public class RayMarcherTests
         var r = 0.5f;
         var sdf = 
             SdfExprs
-            .Sphere(r, color: new Vector3(0.8f, 0.25f, 0.65f))
+            .Sphere(r)
             .RepeatXY(
                 2.25f*r, 2.25f*r,
-                (d, i) => new Vector4(
-                    0.9f*Vector3.One - Vector3.Abs(i)/6f,
-                    d.W))
+                (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
             .ToSdf();
         using var img = sdf.ToImage(w, h,
             new Vector3(-2, 2, 4),
@@ -122,6 +120,7 @@ public class RayMarcherTests
             SdfExprs
             .Cylinder(r, r/4)
             .RepeatXY(2*r, r)
+            .Color(0.95f, 0.95f, 0)
             .ToSdf();
         var rt = new RayMarcher(w, h, sdf);
         using var img = rt.Render();

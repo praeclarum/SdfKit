@@ -3,8 +3,15 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using static SdfKit.VectorOps;
+using static SdfKit.SdfExprMembers;
 
 namespace SdfKit;
+
+public delegate SdfInput SdfInputModifierFunc(SdfInput position);
+public delegate SdfColor SdfOutputModifierFunc(SdfInput position, SdfOutput output);
+
+public delegate SdfIndexedInput SdfIndexedInputModifierFunc(SdfInput position);
+public delegate SdfColor SdfIndexedOutputModifierFunc(SdfIndex index, SdfInput position, SdfOutput output);
 
 public static class SdfExprs
 {
@@ -34,9 +41,15 @@ public static class SdfExprs
         p => new Vector4(1, 1, 1, p.Length() - r);
 }
 
+public struct SdfIndexedInput
+{
+    public SdfInput Position;
+    public Vector3 Cell;
+}
+
 public static class SdfExprEx
 {
-    public static SdfExpr ModifyInput(this SdfExpr sdf, Expression<Func<Vector3, Vector3>> changePosition)
+    public static SdfExpr ModifyInput(this SdfExpr sdf, Expression<SdfInputModifierFunc> changePosition)
     {
         var p = Expression.Parameter(typeof(Vector3), "p");
         return Expression.Lambda<SdfFunc>(
@@ -48,45 +61,63 @@ public static class SdfExprEx
                 p);
     }
 
-    public static SdfExpr ModifyOutput(this SdfExpr sdf, Expression<Func<Vector4, Vector4>> changeResult)
+    public static SdfExpr ModifyOutput(this SdfExpr sdf, Expression<SdfOutputModifierFunc> mod)
     {
         var p = Expression.Parameter(typeof(Vector3), "p");
-        return Expression.Lambda<SdfFunc>(
-                Expression.Invoke(
-                    changeResult,
-                    Expression.Invoke(
-                        sdf,
-                        p)),
-                p);
-    }
 
-    static readonly FieldInfo PositionOfInstance = typeof(Instance).GetField(nameof(Instance.Position));
-    static readonly FieldInfo CellOfInstance = typeof(Instance).GetField(nameof(Instance.Cell));
-
-    public static SdfExpr ModifyInputAndOutput<T>(
-        this SdfExpr sdf,
-        Expression<Func<SdfInput, Instance>> modInput,
-        Expression<Func<SdfOutput, Vector3, SdfOutput>> modOutput)
-    {
-        var p = Expression.Parameter(typeof(Vector3), "p");
-        var i = Expression.Variable(typeof(Instance), "i");
-        var mp = Expression.Variable(typeof(Vector3), "mp");
+        var d = Expression.Variable(typeof(SdfOutput), "d");
+        var mo = Expression.Variable(typeof(SdfColor), "mo");
 
         return Expression.Lambda<SdfFunc>(
             Expression.Block(
-                new[] { i, mp },
-                Expression.Assign(i, Expression.Invoke(modInput, p)),
-                Expression.Invoke(
-                    modOutput,
+                new[] { d, mo },
+                Expression.Assign(d, Expression.Invoke(sdf, p)),
+                Expression.Assign(mo, 
                     Expression.Invoke(
-                        sdf,
-                        Expression.Field(i, PositionOfInstance)),
-                    Expression.Field(i, CellOfInstance))),
+                        mod,
+                        p,
+                        d)),
+                Expression.New(Vector4Ctor,
+                    mo,
+                    Expression.Field(d, WOfVector4))),
+            new[] { p });
+    }
+
+    public static SdfExpr ModifyInputAndOutput<T>(
+        this SdfExpr sdf,
+        Expression<SdfIndexedInputModifierFunc> modInput,
+        Expression<SdfIndexedOutputModifierFunc> modOutput)
+    {
+        var p = Expression.Parameter(typeof(Vector3), "p");
+
+        var mp = Expression.Variable(typeof(Vector3), "mp");
+        var d = Expression.Variable(typeof(SdfOutput), "d");
+        var i = Expression.Variable(typeof(SdfIndexedInput), "i");
+        var mo = Expression.Variable(typeof(SdfColor), "mo");
+
+        return Expression.Lambda<SdfFunc>(
+            Expression.Block(
+                new[] { mp, d, i, mo },
+                Expression.Assign(i, Expression.Invoke(modInput, p)),
+                Expression.Assign(mp, Expression.Field(i, PositionOfInstance)),
+                Expression.Assign(d, Expression.Invoke(sdf, mp)),
+                Expression.Assign(mo, 
+                    Expression.Invoke(
+                        modOutput,
+                        Expression.Field(i, CellOfInstance),
+                        mp,
+                        d)),
+                Expression.New(Vector4Ctor,
+                    mo,
+                    Expression.Field(d, WOfVector4))),
             new[] { p });
     }
 
     public static SdfExpr Color(this SdfExpr sdf, Vector3 color) =>
-        sdf.ModifyOutput(d => new Vector4(color, d.W));
+        sdf.ModifyOutput((p, d) => color);
+
+    public static SdfExpr Color(this SdfExpr sdf, float r, float g, float b) =>
+        sdf.ModifyOutput((p, d) => new Vector3(r, g, b));
 
     public static SdfExpr RepeatX(this SdfExpr sdf, float sizeX) =>
         sdf.ModifyInput(p => new Vector3(
@@ -102,16 +133,10 @@ public static class SdfExprEx
             p.Z));
     }
 
-    public struct Instance
-    {
-        public SdfInput Position;
-        public Vector3 Cell;
-    }
-
-    public static SdfExpr RepeatXY(this SdfExpr sdf, float sizeX, float sizeY, Expression<Func<SdfOutput, Vector3, SdfOutput>> mod)
+    public static SdfExpr RepeatXY(this SdfExpr sdf, float sizeX, float sizeY, Expression<SdfIndexedOutputModifierFunc> mod)
     {
         return sdf.ModifyInputAndOutput<Vector2>(
-            p => new Instance
+            p => new SdfIndexedInput
             {
                 Position = new Vector3(
                     Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
@@ -142,18 +167,26 @@ public static class SdfExprEx
     }
 }
 
+static class SdfExprMembers
+{
+    public static readonly ConstructorInfo Vector4Ctor = typeof(Vector4).GetConstructor(new[]{typeof(Vector3),typeof(float)});
+    public static readonly PropertyInfo SpanOfOutputMemory = typeof(Memory<SdfOutput>).GetProperty(nameof(Memory<SdfOutput>.Span));
+    public static readonly PropertyInfo LengthOfInputMemory = typeof(Memory<SdfInput>).GetProperty(nameof(Memory<SdfInput>.Length));
+    public static readonly PropertyInfo SpanOfInputMemory = typeof(Memory<SdfInput>).GetProperty(nameof(Memory<SdfInput>.Span));
+    public static readonly FieldInfo PositionOfInstance = typeof(SdfIndexedInput).GetField(nameof(SdfIndexedInput.Position));
+    public static readonly FieldInfo CellOfInstance = typeof(SdfIndexedInput).GetField(nameof(SdfIndexedInput.Cell));
+    public static readonly FieldInfo WOfVector4 = typeof(Vector4).GetField(nameof(Vector4.W));
+}
+
 static class SdfExprCompiler
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T SpanGetItem<T>(Span<T> span, int index) => span[index];
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T SpanSetItem<T>(Span<T> span, int index, T value) => span[index] = value;
-
-    static readonly PropertyInfo SpanOfOutputMemory = typeof(Memory<SdfOutput>).GetProperty(nameof(Memory<SdfOutput>.Span));
-    static readonly PropertyInfo LengthOfInputMemory = typeof(Memory<SdfInput>).GetProperty(nameof(Memory<SdfInput>.Length));
-    static readonly PropertyInfo SpanOfInputMemory = typeof(Memory<SdfInput>).GetProperty(nameof(Memory<SdfInput>.Span));
     static readonly MethodInfo SpanOutputSetter = typeof(SdfExprCompiler).GetMethod(nameof(SdfExprCompiler.SpanSetItem)).MakeGenericMethod(typeof(SdfOutput));
     static readonly MethodInfo SpanInputGetter = typeof(SdfExprCompiler).GetMethod(nameof(SdfExprCompiler.SpanGetItem)).MakeGenericMethod(typeof(SdfInput));
+
 
     public static Sdf Compile(SdfExpr expression)
     {
