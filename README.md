@@ -18,15 +18,22 @@ Main features include:
 
 The following code is used to define an SDF scene of inifinitely repeating spheres.
 Each sphere's color and position are modified when repeated.
+The SDF is then rendered to an image.
 
 ```csharp
 var sdf = 
     SdfExprs
-    .Sphere(r)
+    .Sphere(0.5)
     .RepeatXY(
-        2.25f*r, 2.25f*r,
+        1.125f, 1.125f,
         (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
     .ToSdf();
+
+var img = sdf.ToImage(
+    1920, 1080,
+    new Vector3(-2, 2, 4),
+    Vector3.Zero,
+    Vector3.UnitY);
 ```
 
 ![Raytrace of Sample Code](SampleResults/SphereRepeat_1920x1080.jpg)
