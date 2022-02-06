@@ -1,4 +1,10 @@
 using System.Buffers;
+using System.Runtime.InteropServices;
+
+#if NET6_0_OR_GREATER
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
+#endif
 
 namespace SdfKit;
 
@@ -662,18 +668,74 @@ public static class VectorOps
         return data;
     }
 
+#if NET6_0_OR_GREATER
+    static readonly bool hasFma = Fma.IsSupported;
+    static readonly bool hasAvx = Avx.IsSupported;
+#endif
+
     public static Vec3Data MulAdd(Vec3Data a, FloatData b, Vec3Data c)
     {
-        var data = c.Clone();
+        var data = new Vec3Data(a.Width, a.Height, a.Pool);
         var v = data.Values;
         var av = a.Values;
         var bv = b.Values;
+        var cv = c.Values;
         var n = data.Length;
-        for (int i = 0, j = 0; i < n; i += 3, j++) {
-            var bvj = bv[j];
-            v[i] += av[i] * bvj;
-            v[i+1] += av[i+1] * bvj;
-            v[i+2] += av[i+2] * bvj;
+        if (false) {
+            // Just making the ifdef easier to read
+        }
+#if NET6_0_OR_GREATER
+        else if (hasAvx) {
+            var av256 = MemoryMarshal.Cast<float, Vector256<float>>(av);
+            var cv256 = MemoryMarshal.Cast<float, Vector256<float>>(cv);
+            var v256 = MemoryMarshal.Cast<float, Vector256<float>>(v);
+            var floatsPerReg = Vector256<float>.Count;
+            var num256s = n / floatsPerReg;
+            var numRem = n % floatsPerReg;
+            for (int i = 0, j = 0; i < num256s; i++) {
+                var bx = bv[j / 3];
+                var by = bv[(j + 1) / 3];
+                var bz = bv[(j + 2) / 3];
+                var bw = bv[(j + 3) / 3];
+                var bx2 = bv[(j + 4) / 3];
+                var by2 = bv[(j + 5) / 3];
+                var bz2 = bv[(j + 6) / 3];
+                var bw2 = bv[(j + 7) / 3];
+                var b256 = Vector256.Create(bx, by, bz, bw, bx2, by2, bz2, bw2);
+                var result = Avx.Add(Avx.Multiply(av256[i], b256), cv256[i]);
+                v256[i] = result;
+                j += floatsPerReg;
+            }
+        }
+        else if (hasFma) {
+            var av128 = MemoryMarshal.Cast<float, Vector128<float>>(av);
+            var cv128 = MemoryMarshal.Cast<float, Vector128<float>>(cv);
+            var v128 = MemoryMarshal.Cast<float, Vector128<float>>(v);
+            var floatsPerReg = Vector128<float>.Count;
+            var num128s = n / floatsPerReg;
+            var numRem = n % floatsPerReg;
+            for (int i = 0, j = 0; i < num128s; i++) {
+                var bx = bv[j / 3];
+                var by = bv[(j + 1) / 3];
+                var bz = bv[(j + 2) / 3];
+                var bw = bv[(j + 3) / 3];
+                var b128 = Vector128.Create(bx, by, bz, bw);
+                var result = Fma.MultiplyAdd(av128[i], b128, cv128[i]);
+                v128[i] = result;
+                j += floatsPerReg;
+            }
+        }
+#endif
+        else {
+            for (int i = 0, j = 0; i < n; j++) {
+                var bvj = bv[j];
+                v[i] = av[i] * bvj + cv[i];
+                i++;
+                v[i] = av[i] * bvj + cv[i];
+                i++;
+                v[i] = av[i] * bvj + cv[i];
+                i++;
+            }
         }
         return data;
     }
