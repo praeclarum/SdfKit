@@ -259,9 +259,11 @@ public class FloatData : VectorData
         w.Write((ushort)Height); // Height
         w.Write((byte)8); // Bits per pixel
         w.Write((byte)0b00100000); // Image descriptor
+        var k = 0;
+        var vals = Values;
         for (int y = 0; y < Height; y++) {
-            for (int x = 0; x < Width; x++) {
-                var v = this[x, y];
+            for (int x = 0; x < Width; x++, k++) {
+                var v = vals[k];
                 if (v >= far) {
                     w.Write((byte)0);
                 } else if (v <= near) {
@@ -583,29 +585,34 @@ public class Vec3Data : VectorData
         w.Write((ushort)Height); // Height
         w.Write((byte)24); // Bits per pixel
         w.Write((byte)0b00100000); // Image descriptor
+        var k = 0;
+        var vals = Values;
+        var v = 0.0f;
         for (int y = 0; y < Height; y++) {
-            for (int x = 0; x < Width; x++) {
-                var v = this[x, y] * 255.0f;
-                if (v.Z <= 0.0f) {
+            for (int x = 0; x < Width; x++, k += 3) {
+                v = vals[k+2] * 255.0f;
+                if (v <= 0.0f) {
                     w.Write((byte)0);
-                } else if (v.Z >= 255.0f) {
+                } else if (v >= 255.0f) {
                     w.Write((byte)255);
                 } else {
-                    w.Write((byte)v.Z);
+                    w.Write((byte)v);
                 }
-                if (v.Y <= 0.0f) {
+                v = vals[k+1] * 255.0f;
+                if (v <= 0.0f) {
                     w.Write((byte)0);
-                } else if (v.Y >= 255.0f) {
+                } else if (v >= 255.0f) {
                     w.Write((byte)255);
                 } else {
-                    w.Write((byte)v.Y);
+                    w.Write((byte)v);
                 }
-                if (v.X <= 0.0f) {
+                v = vals[k] * 255.0f;
+                if (v <= 0.0f) {
                     w.Write((byte)0);
-                } else if (v.X >= 255.0f) {
+                } else if (v >= 255.0f) {
                     w.Write((byte)255);
                 } else {
-                    w.Write((byte)v.X);
+                    w.Write((byte)v);
                 }
             }
         }
