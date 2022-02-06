@@ -106,25 +106,21 @@ public class RayMarcher
 
         var viewProjectionTransform = ViewTransform * projectionTransform;
         Matrix4x4.Invert(viewProjectionTransform, out var viewProjectionInverse);
-        Vector3 GetDirection(float x, float y, float z = 0) {
-            var vv = new Vector4(x, y, z, 1);
-            var vvv = Vector4.Transform(vv, viewProjectionInverse);
-            var pos = new Vector3(vvv.X/vvv.W, vvv.Y/vvv.W, vvv.Z/vvv.W);
-            var d = pos - cameraPosition;
-            return Vector3.Normalize(d);
-        }
-        var topLeft = GetDirection(-1, 1);
-        var topRight = GetDirection(1, 1);
-        var bottomLeft = GetDirection(-1, -1);
-        var bottomRight = GetDirection(1, -1);
-        var center = GetDirection(0, 0);
         rayDirection = NewVec3(width, height);
+        var rdv = rayDirection.Values;
+        var k = 0;
         for (int j = 0; j < height; j++) {
             var y = 1.0f - 2.0f * (float)j / (height - 1);
             for (int i = 0; i < width; i++) {
                 var x = -1.0f + 2.0f * (float)i / (width - 1);
-                var dir = GetDirection(x, y);
-                rayDirection[i, j] = dir;
+                var vv = new Vector4(x, y, 0, 1);
+                var vvv = Vector4.Transform(vv, viewProjectionInverse);
+                var pos = new Vector3(vvv.X/vvv.W, vvv.Y/vvv.W, vvv.Z/vvv.W);
+                var d = pos - cameraPosition;
+                d = Vector3.Normalize(d);
+                rdv[k++] = d.X;
+                rdv[k++] = d.Y;
+                rdv[k++] = d.Z;
             }
         }
     }
