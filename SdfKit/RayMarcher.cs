@@ -124,8 +124,7 @@ public class RayMarcher
         using var depth = Float(NearPlaneDistance - 0.1f);
         using var diffuseColor = NewVec3(0.0f, 0.0f, 0.0f);
         for (int i = 0; i < DepthIterations; i++) {
-            using var samplePos = rayDir*depth;
-            samplePos.AddInplace(rayOrigin);
+            using var samplePos = MulAdd(rayDir, depth, rayOrigin);
             using var sampleDist = Scene(samplePos);
             depth.AddInplace(sampleDist.W);
             if (i == DepthIterations - 1) {

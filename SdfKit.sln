@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SdfKit", "SdfKit\SdfKit.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{FA8F70D6-2001-4642-9DD0-B110782B2D99}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Perf", "Perf\Perf.csproj", "{5EB2F570-A351-40C7-B4ED-0CB6D005A888}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{FA8F70D6-2001-4642-9DD0-B110782B2D99}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA8F70D6-2001-4642-9DD0-B110782B2D99}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA8F70D6-2001-4642-9DD0-B110782B2D99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EB2F570-A351-40C7-B4ED-0CB6D005A888}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EB2F570-A351-40C7-B4ED-0CB6D005A888}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EB2F570-A351-40C7-B4ED-0CB6D005A888}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EB2F570-A351-40C7-B4ED-0CB6D005A888}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

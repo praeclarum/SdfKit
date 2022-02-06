@@ -156,14 +156,14 @@ public static class SdfExprEx
             Mod((p.Y + sizeY * 0.5f), sizeY) - sizeY * 0.5f,
             p.Z));
 
-    public static SdfFunc ToSdfFunc(this SdfExpr expression)
+    public static SdfFunc ToSdfFunc(this SdfExpr sdf)
     {
-        return expression.Compile();
+        return sdf.Compile();
     }
 
-    public static Sdf ToSdf(this SdfExpr expression)
+    public static Sdf ToSdf(this SdfExpr sdf)
     {
-        return SdfExprCompiler.Compile(expression);
+        return SdfExprCompiler.Compile(sdf);
     }
 }
 

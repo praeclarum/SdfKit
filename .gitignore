@@ -1,3 +1,5 @@
+*.nettrace
+*.speedscope.json
 .ionide
 
 # User-specific files

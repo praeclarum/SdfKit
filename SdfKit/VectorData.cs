@@ -474,7 +474,7 @@ public class Vec3Data : VectorData
 
     public static Vec3Data operator -(Vector3 a, Vec3Data b)
     {
-        var data = new Vec3Data(b);
+        var data = new Vec3Data(b.Width, b.Height, b.Pool);
         var v = data.Values;
         var bv = b.Values;
         var n = data.Length;
@@ -631,6 +631,37 @@ public static class VectorOps
     /// </summary>
     public static float Mod(float a, float b) =>
         a - b * MathF.Floor(a / b);
+
+    public static Vec3Data MulAdd(Vec3Data a, Vec3Data b, Vec3Data c)
+    {
+        var data = c.Clone();
+        var v = data.Values;
+        var av = a.Values;
+        var bv = b.Values;
+        var n = data.Length;
+        for (int i = 0; i < n; i += 3) {
+            v[i] += av[i] * bv[i];
+            v[i+1] += av[i+1] * bv[i+1];
+            v[i+2] += av[i+2] * bv[i+2];
+        }
+        return data;
+    }
+
+    public static Vec3Data MulAdd(Vec3Data a, FloatData b, Vec3Data c)
+    {
+        var data = c.Clone();
+        var v = data.Values;
+        var av = a.Values;
+        var bv = b.Values;
+        var n = data.Length;
+        for (int i = 0, j = 0; i < n; i += 3, j++) {
+            var bvj = bv[j];
+            v[i] += av[i] * bvj;
+            v[i+1] += av[i+1] * bvj;
+            v[i+2] += av[i+2] * bvj;
+        }
+        return data;
+    }
 
     public static Vec3Data Normalize(Vec3Data xyz) =>
         xyz.Clone().NormalizeInplace();

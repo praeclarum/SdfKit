@@ -93,8 +93,6 @@ public class RayMarcherTests
     [Test]
     public void SphereRepeat()
     {
-        var w = 192;
-        var h = 108;
         var r = 0.5f;
         var sdf = 
             SdfExprs
@@ -103,14 +101,44 @@ public class RayMarcherTests
                 2.25f*r, 2.25f*r,
                 (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
             .ToSdf();
-        var sw = Stopwatch.StartNew();
-        using var img = sdf.ToImage(w, h,
-            new Vector3(-2, 2, 4),
-            Vector3.Zero,
-            Vector3.UnitY);
+        TimeRender(sdf, nameof(SphereRepeat));
+    }
+
+    [Test]
+    public void SphereRepeatStatic()
+    {
+        var r = 0.5f;
+        var sdf = 
+            SdfFuncs
+            .Sphere(r)
+            .RepeatXY(
+                2.25f*r, 2.25f*r,
+                (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
+            .ToSdf();
+        TimeRender(sdf, nameof(SphereRepeatStatic));
+    }
+
+    void TimeRender(Sdf sdf, string name,
+        int loops = 1,
+        int w = 192,
+        int h = 108)
+    {
+        var sw = new Stopwatch();
+        Vec3Data? img = null;
+        sw.Start();
+        for (var i = 0; i < loops; i++) {
+            if (i == 1)
+                sw.Restart();
+            img = sdf.ToImage(w, h,
+                new Vector3(-2, 2, 4),
+                Vector3.Zero,
+                Vector3.UnitY);
+        }
         sw.Stop();
-        System.IO.File.WriteAllText("SphereRepeatTime.txt", $"Render time: {sw.ElapsedMilliseconds}ms\n");
-        img.SaveTga($"SphereRepeat_{w}x{h}.tga");
+        if (loops > 1) loops--;
+        var millis = sw.ElapsedMilliseconds / (float)loops;
+        System.IO.File.WriteAllText($"{name}Time.txt", $"Render time: {millis}ms\n");
+        img?.SaveTga($"{name}_{w}x{h}.tga");
     }
 
     [Test]
