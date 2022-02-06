@@ -10,24 +10,38 @@ namespace SdfKit;
 
 public class VectorData : IDisposable
 {
-    public readonly float[] Values;
+    public readonly float[]? FloatArray;
+    public readonly Memory<float> FloatMemory;
+    public Span<float> Values => FloatMemory.Span;
     public readonly int Width;
     public readonly int Height;
     public readonly int Dimensions;
     public readonly int Length;
-    public readonly ArrayPool<float> Pool;
+    public readonly ArrayPool<float>? Pool;
     bool returned;
 
-    public Memory<float> FloatMemory => Values.AsMemory(0, Length);
+    // public Memory<float> FloatMemory => Values.AsMemory(0, Length);
 
-    protected VectorData(int width, int height, int dim, ArrayPool<float> pool)
+    protected VectorData(int width, int height, int dim, ArrayPool<float>? pool = null)
     {
         this.Width = width;
         this.Height = height;
         this.Dimensions = dim;
-        this.Pool = pool;
+        this.Pool = pool ?? ArrayPool<float>.Shared;
         Length = width * height * dim;
-        Values = pool.Rent(Length);
+        FloatArray = Pool.Rent(Length);
+        FloatMemory = FloatArray.AsMemory().Slice(0, Length);
+    }
+
+    protected VectorData(int width, int height, int dim, Memory<float> memory)
+    {
+        this.Width = width;
+        this.Height = height;
+        this.Dimensions = dim;
+        this.FloatMemory = memory;
+        this.Pool = null;
+        Length = width * height * dim;
+        FloatMemory = memory;
     }
 
     public void Dispose()
@@ -38,8 +52,10 @@ public class VectorData : IDisposable
     public void Return()
     {
         if (!returned) {
-            Pool.Return(Values);
             returned = true;
+            if (Pool is {} p && FloatArray is {} a) {
+                p.Return(a);
+            }
         }
     }
     public VectorData AddInplace(float other)
@@ -113,6 +129,16 @@ public class VectorData : IDisposable
         }
         return this;
     }
+
+    public void Fill(float x)
+    {
+        var n = Length;
+        var v = Values;
+        for (int i = 0; i < n; i++) {
+            v[i] = x;
+        }
+    }
+
 }
 
 public class FloatData : VectorData
@@ -254,7 +280,7 @@ public class Vec2Data : VectorData
     public Vec2Data(Vec2Data other)
         : base(other.Width, other.Height, other.Dimensions, other.Pool)
     {
-        Buffer.BlockCopy(other.Values, 0, Values, 0, Length * sizeof(float));
+        other.FloatMemory.CopyTo(FloatMemory);
     }
 
     public static Vec2Data operator +(Vec2Data a, Vec2Data b)
@@ -362,7 +388,7 @@ public class Vec3Data : VectorData
     public Vec3Data(Vec3Data other)
         : base(other.Width, other.Height, other.Dimensions, other.Pool)
     {
-        Buffer.BlockCopy(other.Values, 0, Values, 0, Length * sizeof(float));
+        other.FloatMemory.CopyTo(FloatMemory);
     }
 
     public Vec3Data Clone()
@@ -582,7 +608,7 @@ public class Vec4Data : VectorData
     public Vec4Data(Vec4Data other)
         : base(other.Width, other.Height, other.Dimensions, other.Pool)
     {
-        Buffer.BlockCopy(other.Values, 0, Values, 0, Length * sizeof(float));
+        other.FloatMemory.CopyTo(FloatMemory);
     }
 
     public Vec4Data Clone()

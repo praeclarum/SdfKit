@@ -200,7 +200,7 @@ public class RayMarcher
     FloatData Float(float x)
     {
         var data = NewFloat();
-        Array.Fill(data.Values, x);
+        data.Fill(x);
         return data;
     }
     Vec2Data NewVec2() => new Vec2Data(width, height, pool);
