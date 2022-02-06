@@ -15,6 +15,16 @@ public delegate SdfColor SdfIndexedOutputModifierFunc(SdfIndex index, SdfInput p
 
 public static class SdfExprs
 {
+    public static SdfExpr Box(Vector3 bounds)
+    {
+        return (p) => new Vector4(
+            Vector3.One,
+            Vector3.Max(Vector3.Abs(p) - bounds, Vector3.Zero).Length() +
+                VMax(Vector3.Min(Vector3.Abs(p) - bounds, Vector3.Zero)));
+    }
+
+    public static SdfExpr Box(float bounds) => Box(new Vector3(bounds));
+
     public static SdfExpr Cylinder(float r, float h, Vector3 color) =>
         p => new Vector4(color, MathF.Max(MathF.Sqrt(p.X * p.X + p.Z * p.Z) - r, MathF.Abs(p.Y) - h));
 
@@ -39,12 +49,29 @@ public static class SdfExprs
 
     public static SdfExpr Sphere(float r) =>
         p => new Vector4(1, 1, 1, p.Length() - r);
+
+    // [System.Diagnostics.CodeAnalysis.RequiresUnreferencedCode]
+    public static SdfExpr Union(SdfExpr a, SdfExpr b)
+    {
+        var p = Expression.Parameter(typeof(SdfInput), "p");
+        var da = Expression.Variable(typeof(SdfOutput), "da");
+        var db = Expression.Variable(typeof(SdfOutput), "db");
+        var body = Expression.Block(
+            new[] { da, db },
+            Expression.Assign(da, Expression.Invoke(a, p)),
+            Expression.Assign(db, Expression.Invoke(b, p)),
+            Expression.Condition(
+                Expression.LessThan(Expression.Field(da, WOfVector4), Expression.Field(db, WOfVector4)),
+                da,
+                db));
+        return Expression.Lambda<SdfFunc>(body, p);
+    }
 }
 
 public struct SdfIndexedInput
 {
     public SdfInput Position;
-    public Vector3 Cell;
+    public Vector3 Index;
 }
 
 public static class SdfExprEx
@@ -83,7 +110,7 @@ public static class SdfExprEx
             new[] { p });
     }
 
-    public static SdfExpr ModifyInputAndOutput<T>(
+    public static SdfExpr ModifyInputAndOutput(
         this SdfExpr sdf,
         Expression<SdfIndexedInputModifierFunc> modInput,
         Expression<SdfIndexedOutputModifierFunc> modOutput)
@@ -135,17 +162,34 @@ public static class SdfExprEx
 
     public static SdfExpr RepeatXY(this SdfExpr sdf, float sizeX, float sizeY, Expression<SdfIndexedOutputModifierFunc> mod)
     {
-        return sdf.ModifyInputAndOutput<Vector2>(
+        return sdf.ModifyInputAndOutput(
             p => new SdfIndexedInput
             {
                 Position = new Vector3(
                     Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
                     Mod((p.Y + sizeY * 0.5f), sizeY) - sizeY * 0.5f,
                     p.Z),
-                Cell = new Vector3(
+                Index = new Vector3(
                     MathF.Floor((p.X + sizeX * 0.5f) / sizeX),
                     MathF.Floor((p.Y + sizeY * 0.5f) / sizeY),
                     0.0f),
+            },
+            mod);
+    }
+
+    public static SdfExpr RepeatXZ(this SdfExpr sdf, float sizeX, float sizeZ, Expression<SdfIndexedOutputModifierFunc> mod)
+    {
+        return sdf.ModifyInputAndOutput(
+            p => new SdfIndexedInput
+            {
+                Position = new Vector3(
+                    Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
+                    p.Y,
+                    Mod((p.Z + sizeZ * 0.5f), sizeZ) - sizeZ * 0.5f),
+                Index = new Vector3(
+                    MathF.Floor((p.X + sizeX * 0.5f) / sizeX),
+                    0.0f,
+                    MathF.Floor((p.Z + sizeZ * 0.5f) / sizeZ)),
             },
             mod);
     }
@@ -174,7 +218,7 @@ static class SdfExprMembers
     public static readonly PropertyInfo LengthOfInputMemory = typeof(Memory<SdfInput>).GetProperty(nameof(Memory<SdfInput>.Length));
     public static readonly PropertyInfo SpanOfInputMemory = typeof(Memory<SdfInput>).GetProperty(nameof(Memory<SdfInput>.Span));
     public static readonly FieldInfo PositionOfInstance = typeof(SdfIndexedInput).GetField(nameof(SdfIndexedInput.Position));
-    public static readonly FieldInfo CellOfInstance = typeof(SdfIndexedInput).GetField(nameof(SdfIndexedInput.Cell));
+    public static readonly FieldInfo CellOfInstance = typeof(SdfIndexedInput).GetField(nameof(SdfIndexedInput.Index));
     public static readonly FieldInfo WOfVector4 = typeof(Vector4).GetField(nameof(Vector4.W));
 }
 

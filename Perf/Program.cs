@@ -5,31 +5,43 @@ using System.Diagnostics;
 void SphereRepeat()
 {
     var r = 0.5f;
-    var sdf = 
+    var boxes = 
+        SdfExprs
+        .Box(r/2)
+        .RepeatXZ(
+            2.25f*r, 2.25f*r,
+            (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f);
+    var spheres = 
         SdfExprs
         .Sphere(r)
         .RepeatXY(
             2.25f*r, 2.25f*r,
-            (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
-        .ToSdf();
+            (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f);
+    var sdf = SdfExprs.Union(spheres, boxes).ToSdf();
     TimeRender(sdf, nameof(SphereRepeat));
 }
 
 void SphereRepeatStatic()
 {
     var r = 0.5f;
-    var sdf = 
+    var boxes = 
+        SdfFuncs
+        .Box(r/2)
+        .RepeatXZ(
+            2.25f*r, 2.25f*r,
+            (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f);
+    var spheres = 
         SdfFuncs
         .Sphere(r)
         .RepeatXY(
             2.25f*r, 2.25f*r,
-            (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f)
-        .ToSdf();
+            (i, p, d) => 0.9f*Vector3.One - Vector3.Abs(i)/6f);
+    var sdf = SdfFuncs.Union(spheres, boxes).ToSdf();
     TimeRender(sdf, nameof(SphereRepeatStatic));
 }
 
 void TimeRender(Sdf sdf, string name,
-    int loops = 3,
+    int loops = 1,
     int w = 1920,
     int h = 1080)
 {
@@ -49,6 +61,7 @@ void TimeRender(Sdf sdf, string name,
     if (loops > 1) loops--;
     var millis = sw.ElapsedMilliseconds / (float)loops;
     Console.WriteLine($"{name.PadLeft(20)} Render Time: {millis}ms");
+    img?.SaveTga($"{name}_{w}x{h}.tga");
 }
 
 SphereRepeat();

@@ -18,7 +18,6 @@ perf: Makefile
 	dotnet run --project Perf/Perf.csproj -c Release
 
 macpublish:
-	rm -rf Perf/bin/Release/net6.0/osx-x64/publish
 	dotnet publish Perf/Perf.csproj -r osx-x64 -c Release --self-contained true
 
 macperf: macpublish

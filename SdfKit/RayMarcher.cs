@@ -144,8 +144,7 @@ public class RayMarcher
         using var bgMask = depth > FarPlaneDistance;
         using var bg = bgMask * new Vector3(0.5f, 0.75f, 1.0f);
         bgMask.NotInplace();
-        using var fg = bgMask * lighting;
-        var fragColor = fg + bg;
+        var fragColor = MulAdd(lighting, bgMask, bg);
         return fragColor;
     }
 

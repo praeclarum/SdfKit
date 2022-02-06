@@ -190,6 +190,19 @@ public static class Sdfs
 
 public static class SdfFuncs
 {
+    public static SdfFunc Box(Vector3 bounds)
+    {
+        return (p) =>
+        {
+            var wd = Vector3.Abs(p) - bounds;
+            var d = Vector3.Max(wd, Vector3.Zero).Length() +
+                        VMax(Vector3.Min(wd, Vector3.Zero));
+            return new Vector4(Vector3.One, d);
+        };
+    }
+
+    public static SdfFunc Box(float bounds) => Box(new Vector3(bounds));
+
     public static SdfFunc Sphere(float radius)
     {
         return (p) =>
@@ -197,11 +210,21 @@ public static class SdfFuncs
             return new Vector4(Vector3.One, p.Length() - radius);
         };
     }
+
+    public static SdfFunc Union(SdfFunc a, SdfFunc b)
+    {
+        return (p) =>
+        {
+            var da = a(p);
+            var db = b(p);
+            return da.W < db.W ? da : db;
+        };
+    }
 }
 
 public static class SdfFuncEx
 {
-    public static SdfFunc ModifyInputAndOutput<T>(
+    public static SdfFunc ModifyInputAndOutput(
         this SdfFunc sdf,
         SdfIndexedInputModifierFunc modInput,
         SdfIndexedOutputModifierFunc modOutput)
@@ -210,24 +233,41 @@ public static class SdfFuncEx
             var i = modInput(p);
             var mp = i.Position;
             var d = sdf(mp);
-            var mo = modOutput(i.Cell, mp, d);
+            var mo = modOutput(i.Index, mp, d);
             return new Vector4(mo, d.W);
         };
     }
 
     public static SdfFunc RepeatXY(this SdfFunc sdf, float sizeX, float sizeY, SdfIndexedOutputModifierFunc mod)
     {
-        return sdf.ModifyInputAndOutput<Vector2>(
+        return sdf.ModifyInputAndOutput(
             p => new SdfIndexedInput
             {
                 Position = new Vector3(
                     Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
                     Mod((p.Y + sizeY * 0.5f), sizeY) - sizeY * 0.5f,
                     p.Z),
-                Cell = new Vector3(
+                Index = new Vector3(
                     MathF.Floor((p.X + sizeX * 0.5f) / sizeX),
                     MathF.Floor((p.Y + sizeY * 0.5f) / sizeY),
                     0.0f),
+            },
+            mod);
+    }
+
+    public static SdfFunc RepeatXZ(this SdfFunc sdf, float sizeX, float sizeZ, SdfIndexedOutputModifierFunc mod)
+    {
+        return sdf.ModifyInputAndOutput(
+            p => new SdfIndexedInput
+            {
+                Position = new Vector3(
+                    Mod((p.X + sizeX * 0.5f), sizeX) - sizeX * 0.5f,
+                    p.Y,
+                    Mod((p.Z + sizeZ * 0.5f), sizeZ) - sizeZ * 0.5f),
+                Index = new Vector3(
+                    MathF.Floor((p.X + sizeX * 0.5f) / sizeX),
+                    0.0f,
+                    MathF.Floor((p.Z + sizeZ * 0.5f) / sizeZ)),
             },
             mod);
     }
