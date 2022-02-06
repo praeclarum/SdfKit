@@ -647,6 +647,21 @@ public static class VectorOps
         return data;
     }
 
+    public static Vec3Data MulAdd(FloatData a, Vec3Data b, float c)
+    {
+        var data = new Vec3Data(b.Width, b.Height, b.Pool);
+        var v = data.Values;
+        var av = a.Values;
+        var bv = b.Values;
+        var n = data.Length;
+        for (int i = 0, j = 0; i < n; i += 3, j++) {
+            v[i] = av[j] * bv[i] + c;
+            v[i+1] = av[j] * bv[i+1] + c;
+            v[i+2] = av[j] * bv[i+2] + c;
+        }
+        return data;
+    }
+
     public static Vec3Data MulAdd(Vec3Data a, FloatData b, Vec3Data c)
     {
         var data = c.Clone();

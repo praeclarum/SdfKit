@@ -29,7 +29,7 @@ void SphereRepeatStatic()
 }
 
 void TimeRender(Sdf sdf, string name,
-    int loops = 10,
+    int loops = 3,
     int w = 1920,
     int h = 1080)
 {

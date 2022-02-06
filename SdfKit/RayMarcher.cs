@@ -139,8 +139,7 @@ public class RayMarcher
         using var diffuseValue =
             Dot(surfaceNormal, lightDirection)
             .MaxInplace(0.0f);
-        using var lighting = diffuseValue * diffuseColor;
-        lighting.AddInplace(0.1f);
+        using var lighting = MulAdd(diffuseValue, diffuseColor, 0.1f);
         // Calculate the color
         using var bgMask = depth > FarPlaneDistance;
         using var bg = bgMask * new Vector3(0.5f, 0.75f, 1.0f);

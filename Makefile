@@ -17,12 +17,14 @@ pack:
 perf: Makefile
 	dotnet run --project Perf/Perf.csproj -c Release
 
-macperf:
-	rm -rf Perf/bin/Release
+macpublish:
+	rm -rf Perf/bin/Release/net6.0/osx-x64/publish
 	dotnet publish Perf/Perf.csproj -r osx-x64 -c Release --self-contained true
+
+macperf: macpublish
 	Perf/bin/Release/net6.0/osx-x64/publish/Perf
 
-mactrace:
+mactrace: macpublish
 	rm -rf *.nettrace
 	rm -rf *.speedscope.json
 	dotnet-trace collect -- Perf/bin/Release/net6.0/osx-x64/publish/Perf
