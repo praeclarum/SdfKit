@@ -47,7 +47,19 @@ public class RayMarcher
         GetCameraRays(out var ro, out var rd);
         using (ro)
         using (rd) {
-            return Render(ro, rd);
+            var numPartitions = Environment.ProcessorCount;
+            var fragColor = NewVec3(width, height, 0.0f, 0.0f, 0.0f);
+            var roPartitions = ro.PartitionVertically(numPartitions);
+            var rdPartitions = rd.PartitionVertically(numPartitions);
+            var fragColorPartitions = fragColor.PartitionVertically(numPartitions);
+            Parallel.For(0, numPartitions, i =>
+            {
+                var roPart = roPartitions[i];
+                var rdPart = rdPartitions[i];
+                var fragColorPart = fragColorPartitions[i];
+                Render(fragColorPart, roPart, rdPart);
+            });
+            return fragColor;
         }
     }
 
@@ -68,7 +80,9 @@ public class RayMarcher
     /// </summary>
     FloatData RenderDepth(Vec3Data rayOrigin, Vec3Data rayDir)
     {
-        var depth = Float(NearPlaneDistance - 0.1f);
+        var width = rayOrigin.Width;
+        var height = rayOrigin.Height;
+        var depth = Float(width, height, NearPlaneDistance - 0.1f);
         for (int i = 0; i < DepthIterations; i++) {
             using var samplePos = rayDir*depth;
             samplePos.AddInplace(rayOrigin);
@@ -82,7 +96,7 @@ public class RayMarcher
     {
         Matrix4x4.Invert(ViewTransform, out var cameraTransform);
         var cameraPosition = Vector3.Transform(Vector3.Zero, cameraTransform);
-        rayOrigin = NewVec3(cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
+        rayOrigin = NewVec3(width, height, cameraPosition.X, cameraPosition.Y, cameraPosition.Z);
 
         var projectionTransform = Matrix4x4.CreatePerspectiveFieldOfView(
             VerticalFieldOfViewDegrees * MathF.PI / 180.0f,
@@ -104,7 +118,7 @@ public class RayMarcher
         var bottomLeft = GetDirection(-1, -1);
         var bottomRight = GetDirection(1, -1);
         var center = GetDirection(0, 0);
-        rayDirection = NewVec3();
+        rayDirection = NewVec3(width, height);
         for (int j = 0; j < height; j++) {
             var y = 1.0f - 2.0f * (float)j / (height - 1);
             for (int i = 0; i < width; i++) {
@@ -118,11 +132,13 @@ public class RayMarcher
     /// <summary>
     /// Returns a color for every pixel in fragCoord.
     /// </summary>
-    Vec3Data Render(Vec3Data rayOrigin, Vec3Data rayDir)
+    Vec3Data Render(Vec3Data fragColor, Vec3Data rayOrigin, Vec3Data rayDir)
     {
+        var width = fragColor.Width;
+        var height = fragColor.Height;
         // Find surface intersection for every ray.
-        using var depth = Float(NearPlaneDistance - 0.1f);
-        using var diffuseColor = NewVec3(0.0f, 0.0f, 0.0f);
+        using var depth = Float(width, height, NearPlaneDistance - 0.1f);
+        using var diffuseColor = NewVec3(width, height, 0.0f, 0.0f, 0.0f);
         for (int i = 0; i < DepthIterations; i++) {
             using var samplePos = MulAdd(rayDir, depth, rayOrigin);
             using var sampleDist = Scene(samplePos);
@@ -144,7 +160,8 @@ public class RayMarcher
         using var bgMask = depth > FarPlaneDistance;
         using var bg = bgMask * new Vector3(0.5f, 0.75f, 1.0f);
         bgMask.NotInplace();
-        var fragColor = MulAdd(lighting, bgMask, bg);
+        using var fg = MulAdd(lighting, bgMask, bg);
+        fragColor.AddInplace(fg);
         return fragColor;
     }
 
@@ -162,7 +179,8 @@ public class RayMarcher
         Vec4Data? px = null, py = null, pz = null;
         Vec4Data? nx = null, ny = null, nz = null;
         
-        Parallel.ForEach(GradOffsets, (o, s, i) => {
+        for (var i = 0; i < 6; i++) {
+            var o = GradOffsets[i];
             // Console.WriteLine($"{i} = {o}");
             using var op = p + o;
             var d = Scene(op);
@@ -174,7 +192,7 @@ public class RayMarcher
                 case 4: ny = d; break;
                 case 5: nz = d; break;
             }
-        });
+        }
         if (px is null || py is null || pz is null) {
             throw new System.Exception("px, py, pz are null");
         }
@@ -191,25 +209,24 @@ public class RayMarcher
 
     Vec4Data Scene(Vec3Data p)
     {
-        var distances = NewVec4();
-        sdf.Sample(p.Vector3Memory, distances.Vector4Memory, batchSize, maxDegreeOfParallelism);
+        var distances = NewVec4(p.Width, p.Height);
+        sdf.Sample(p.Vector3Memory, distances.Vector4Memory, batchSize, maxDegreeOfParallelism: 1);
         return distances;
     }
 
-    FloatData NewFloat() => new FloatData(width, height, pool);
-    FloatData Float(float x)
+    FloatData NewFloat(int width, int height) => new FloatData(width, height, pool);
+    FloatData Float(int width, int height, float x)
     {
-        var data = NewFloat();
+        var data = new FloatData(width, height, pool);
         data.Fill(x);
         return data;
     }
-    Vec2Data NewVec2() => new Vec2Data(width, height, pool);
-    Vec3Data NewVec3() => new Vec3Data(width, height, pool);
-    Vec4Data NewVec4() => new Vec4Data(width, height, pool);
+    Vec3Data NewVec3(int width, int height) => new Vec3Data(width, height, pool);
+    Vec4Data NewVec4(int width, int height) => new Vec4Data(width, height, pool);
     
-    Vec3Data NewVec3(float x, float y, float z)
+    Vec3Data NewVec3(int width, int height, float x, float y, float z)
     {
-        var data = NewVec3();
+        var data = new Vec3Data(width, height, pool);
         var v = data.Values;
         var n = data.Length;
         for (int i = 0; i < n; ) {
@@ -219,5 +236,4 @@ public class RayMarcher
         }
         return data;
     }
-
 }

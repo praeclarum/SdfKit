@@ -44,6 +44,11 @@ public class VectorData : IDisposable
         FloatMemory = memory;
     }
 
+    public override string ToString()
+    {
+        return $"{Width}x{Height}x{Dimensions} Data";
+    }
+
     public void Dispose()
     {
         Return();
@@ -385,6 +390,11 @@ public class Vec3Data : VectorData
     {
     }
 
+    public Vec3Data(int width, int height, Memory<float> memory)
+        : base(width, height, 3, memory)
+    {
+    }
+
     public Vec3Data(Vec3Data other)
         : base(other.Width, other.Height, other.Dimensions, other.Pool)
     {
@@ -495,6 +505,22 @@ public class Vec3Data : VectorData
             }
         }
         return this;
+    }
+
+    public Vec3Data[] PartitionVertically(int numPartitions)
+    {
+        var partitions = new Vec3Data[numPartitions];
+        var partitionMaxHeight = (Height + numPartitions - 1) / numPartitions;
+        var memory = FloatMemory;
+        var stride = Width * 3;
+        var y = 0;
+        for (int i = 0; i < numPartitions; i++) {
+            var partitionHeight = Math.Min(partitionMaxHeight, Height - y);
+            var partitionMemory = memory.Slice(y * stride, partitionHeight * stride);
+            partitions[i] = new Vec3Data(Width, partitionHeight, partitionMemory);
+            y += partitionHeight;
+        }
+        return partitions;
     }
 
     public static Vec3Data operator -(Vec3Data a, Vec3Data b)

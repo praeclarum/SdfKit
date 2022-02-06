@@ -23,17 +23,27 @@ public static class SdfEx
     {
         var ntotal = distances.Length;
         var numBatches = (ntotal + batchSize - 1) / batchSize;
-        var options = new System.Threading.Tasks.ParallelOptions { 
-            MaxDegreeOfParallelism = maxDegreeOfParallelism,
-        };
-        System.Threading.Tasks.Parallel.For(0, numBatches, options, ib => {
-            // Console.WriteLine($"Batch {ib} of {numBatches}");
-            var startI = ib * batchSize;
-            var endI = Math.Min(ntotal, startI + batchSize);
-            var pointsSlice = points.Slice(startI, endI - startI);
-            var distancesSlice = distances.Slice(startI, endI - startI);
-            sdf(pointsSlice, distancesSlice);
-        });
+        if (maxDegreeOfParallelism == 0 || maxDegreeOfParallelism == 1) {
+            for (int ib = 0; ib < numBatches; ib++) {
+                var startI = ib * batchSize;
+                var endI = Math.Min(ntotal, startI + batchSize);
+                var pointsSlice = points.Slice(startI, endI - startI);
+                var distancesSlice = distances.Slice(startI, endI - startI);
+                sdf(pointsSlice, distancesSlice);
+            }
+        } else {
+            var options = new System.Threading.Tasks.ParallelOptions { 
+                MaxDegreeOfParallelism = maxDegreeOfParallelism,
+            };
+            System.Threading.Tasks.Parallel.For(0, numBatches, options, ib => {
+                // Console.WriteLine($"Batch {ib} of {numBatches}");
+                var startI = ib * batchSize;
+                var endI = Math.Min(ntotal, startI + batchSize);
+                var pointsSlice = points.Slice(startI, endI - startI);
+                var distancesSlice = distances.Slice(startI, endI - startI);
+                sdf(pointsSlice, distancesSlice);
+            });
+        }
     }
 
     public static Voxels ToVoxels(this Sdf sdf, Vector3 min, Vector3 max, int nx, int ny, int nz, int batchSize = SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1, bool clipToBounds = true)
