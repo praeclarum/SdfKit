@@ -30,10 +30,10 @@ public class IterativeClosestPoint
     }
 
     /// <summary>
-    /// Register points with the static points used to construct this instance.
-    /// The returned transform converts from the static coordinate system to the
-    /// input points coordinate system. The inverse of this transform is used to
-    /// move the input points into the static coordinate system.
+    /// Rigidly move the given points to align with the static points
+    /// used to construct this instance.
+    /// The returned transform is the one used to convert
+    /// the given points to their new locations.
     /// </summary>
     public Matrix4x4 RegisterPoints (Span<Vector3> points)
     {
@@ -181,7 +181,7 @@ public class IterativeClosestPoint
             }
 
             // Return the transformation matrix
-            return transformMatrix;
+            return invTransformMatrix;
         }
         finally {
             vpool.Return (corA);
