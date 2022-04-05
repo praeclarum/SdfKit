@@ -12,7 +12,7 @@ public class KdTree
     public float SplitValue;
     public KdTree? Left;
     public KdTree? Right;
-    public byte SplitAxis;
+    public readonly byte SplitAxis;
 
     public bool IsLeaf => Left == null;
 
@@ -29,14 +29,21 @@ public class KdTree
         }
     }
 
-    public KdTree (Vector3 point)
+    public KdTree ()
+    {
+    }
+
+    public KdTree (Vector3 point, byte axis = 0)
     {
         Point = point;
+        SplitAxis = axis;
     }
 
     public KdTree (ReadOnlySpan<Vector3> points, byte axis = 0)
     {
-        System.Console.WriteLine($"KdTree.ctor: npoints={points.Length} axis={axis}");
+        SplitAxis = axis;
+        byte nextAxis = (byte)((axis + 1) % 3);
+
         var npoints = points.Length;
         if (npoints == 0)
             throw new InvalidOperationException ("Points must not be empty");
@@ -47,7 +54,6 @@ public class KdTree
             return;
         }
 
-        SplitAxis = axis;
         var splitValue = 0.0f;
         var di = npoints < 10 ? 1 : npoints / 10;
         var nsplits = 0;
@@ -106,11 +112,11 @@ public class KdTree
             }
         }
         if (leftCount == 1)
-            Left = new KdTree (left[0]);
+            Left = new KdTree (left[0], nextAxis);
         else if (leftCount > 1)
-            Left = new KdTree (left.AsSpan (0, leftCount), (byte)((axis + 1) % 3));
+            Left = new KdTree (left.AsSpan (0, leftCount), nextAxis);
         if (rightCount > 0)
-            Right = new KdTree (right.AsSpan (0, rightCount), (byte)((axis + 1) % 3));
+            Right = new KdTree (right.AsSpan (0, rightCount), nextAxis);
         pool.Return (left);
         pool.Return (right);
     }
