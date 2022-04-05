@@ -14,7 +14,7 @@ public class IterativeClosestPoint
     readonly ArrayPool<Vector3> vpool = ArrayPool<Vector3>.Shared;
     readonly ArrayPool<float> fpool = ArrayPool<float>.Shared;
 
-    public int MaxIterations { get; } = 100;
+    public int MaxIterations { get; set; } = 100;
 
     // public int MaxCorresponses { get; } = 1000;
 
