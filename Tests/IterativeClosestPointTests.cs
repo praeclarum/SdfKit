@@ -8,20 +8,27 @@ public class IterativeClosestPointTest
         new Vector3 (1, 0, 0),
     };
 
-    static Vector3[] TransformPoints (Vector3[] points, Matrix4x4 transform)
+    static (Vector3[] Sources, Vector3[] Transformed) TransformPoints (Vector3[] points, Matrix4x4 transform, double keep)
     {
+        var random = new Random (0);
         var npoints = points.Length;
-        var result = new Vector3[npoints];
+        var sources = new List<Vector3> ();
+        var result = new List<Vector3> ();
         for (var i = 0; i < npoints; i++) {
-            result [i] = Vector3.Transform (points [i], transform);
+            if (random.NextDouble () < keep) {
+                var t = Vector3.Transform (points [i], transform);
+                sources.Add (points [i]);
+                result.Add (t);
+            }
         }
-        return result;
+        return (sources.ToArray (), result.ToArray ());
     }
 
-    public void PointsTest (Vector3[] points, Matrix4x4 expectedTransform)
+    void PointsTest (Vector3[] points, Matrix4x4 expectedTransform, double keep)
     {
         var cp = new IterativeClosestPoint (points);
-        var transformedPoints = TransformPoints (points, expectedTransform);
+        var (sourcePoints, transformedPoints) = TransformPoints (points, expectedTransform, keep);
+        var transformedPointsCopy = transformedPoints.ToArray ();
         var invTransform = cp.RegisterPoints (transformedPoints);
         Matrix4x4.Invert (invTransform, out var transform);
         var translation = transform.Translation;
@@ -32,21 +39,25 @@ public class IterativeClosestPointTest
         Assert.AreEqual (expectedTransform.M11, transform.M11, 1.0e-6f);
         Assert.AreEqual (expectedTransform.M22, transform.M22, 1.0e-6f);
         Assert.AreEqual (expectedTransform.M33, transform.M33, 1.0e-6f);
-        for (var i = 0; i < points.Length; i++) {
-            var p = points [i];
+        for (var i = 0; i < sourcePoints.Length; i++) {
+            var p = sourcePoints [i];
             var q = transformedPoints [i];
             Assert.AreEqual (p.X, q.X, 1.0e-4f);
             Assert.AreEqual (p.Y, q.Y, 1.0e-4f);
             Assert.AreEqual (p.Z, q.Z, 1.0e-4f);
+            var t = Vector3.Transform (transformedPointsCopy [i], invTransform);
+            Assert.AreEqual (p.X, t.X, 1.0e-4f);
+            Assert.AreEqual (p.Y, t.Y, 1.0e-4f);
+            Assert.AreEqual (p.Z, t.Z, 1.0e-4f);
         }
     }
 
-    public void ThreePointsTest (Matrix4x4 expectedTransform)
+    void ThreePointsTest (Matrix4x4 expectedTransform)
     {
-        PointsTest (threePoints, expectedTransform);
+        PointsTest (threePoints, expectedTransform, keep: 1.0);
     }
 
-    public void RandomPointsTest (Matrix4x4 expectedTransform)
+    void RandomPointsTest (Matrix4x4 expectedTransform, double keep)
     {
         var random = new Random (0);
         var npoints = 100;
@@ -57,7 +68,7 @@ public class IterativeClosestPointTest
             var z = (float)random.NextDouble () - 0.5f;
             points [i] = new Vector3 (x, y, z);
         }
-        PointsTest (points, expectedTransform);
+        PointsTest (points, expectedTransform, keep);
     }
 
     [Test]
@@ -103,7 +114,8 @@ public class IterativeClosestPointTest
         RandomPointsTest (
             Matrix4x4.CreateTranslation (0, 0.0f, 0.1f)
             * Matrix4x4.CreateRotationX (1.0f * MathF.PI / 180.0f)
-            * Matrix4x4.CreateTranslation (0, 0.1f, 0)
+            * Matrix4x4.CreateTranslation (0, 0.1f, 0),
+            keep: 0.5
         );
     }
 }
