@@ -18,7 +18,8 @@
         {
             "label": "test",
             "command": "dotnet",
-            "type": "shell",
+            "type": "process",
+            "isBackground": true,
             "args": [
                 "test",
                 // Ask dotnet test to generate full paths for file names.
@@ -26,10 +27,22 @@
                 // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary"
             ],
+            "options": 
+            { 
+                "cwd": "${workspaceFolder}/Tests", 
+                "env": 
+                { 
+                    "VSTEST_HOST_DEBUG": "1" 
+                }, 
+            },
             "group": {
                 "kind": "test",
                 "isDefault": true
             },
+            "presentation": {
+                "echo": true,
+                "reveal": "always"
+            }
         },
         {
             "label": "publish",

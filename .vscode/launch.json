@@ -2,18 +2,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            // For further information visit https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md
-            "name": "Launch Tests",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Tests/bin/Debug/net6.0/Tests.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Tests",
-            "console": "internalConsole",
-            "stopAtEntry": false
-        },
-        {
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
