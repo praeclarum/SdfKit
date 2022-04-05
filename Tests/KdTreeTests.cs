@@ -15,8 +15,9 @@ public class KdTreeTests
         Assert.AreEqual (0, tree.SplitAxis);
         Assert.AreEqual (3, tree.TotalPoints);
         var q = new Vector3 (0.0f, 1.5f, 0.0f);
-        var nearest = tree.Search (q);
+        var nearest = tree.Search (q, out var distance);
         Assert.AreEqual (new Vector3 (0, 1, 0), nearest);
+        Assert.AreEqual (0.5f, distance, 1.0e-4f);
     }
 
     [Test]
@@ -32,9 +33,11 @@ public class KdTreeTests
         var tree = new KdTree (randomPoints);
         Assert.AreEqual (randomPoints.Length, tree.TotalPoints);
         var qIndex = rng.Next (randomPoints.Length);
-        var q = randomPoints[qIndex] + new Vector3 (0.01f, 0.01f, 0.01f);
+        var offset = new Vector3 (0.01f, 0.01f, 0.01f);
+        var q = randomPoints[qIndex] + offset;
         var p = randomPoints[qIndex];
-        var nearest = tree.Search (q);
+        var nearest = tree.Search (q, out var distance);
         Assert.AreEqual (p, nearest);
+        Assert.AreEqual (offset.Length (), distance, 1.0e-4f);
     }
 }

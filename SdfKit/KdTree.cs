@@ -4,7 +4,7 @@ using System.Buffers;
 using System.Numerics;
 
 /// <summary>
-/// A triangle mesh with normals.
+/// A binary tree of points optimized to search for nearest points.
 /// </summary>
 public class KdTree
 {
@@ -121,10 +121,10 @@ public class KdTree
         pool.Return (right);
     }
 
-    public Vector3 Search (Vector3 q)
+    public Vector3 Search (Vector3 q, out float nearestDistance)
     {
         var nearest = Point;
-        var nearestDistance = float.MaxValue;
+        nearestDistance = float.MaxValue;
         NearestNeighborSearch (q, this, ref nearest, ref nearestDistance);
         return nearest;
     }
