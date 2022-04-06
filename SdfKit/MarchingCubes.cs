@@ -78,7 +78,7 @@ public static class MarchingCubes
             progress?.Report((float)z / nz_bound);
         }
 
-        var mesh = new Mesh (cell.Vertices, cell.Normals, cell.Faces);
+        var mesh = new Mesh (cell.Vertices, cell.NegativeNormals, cell.Faces);
         var size = volume.Size;
         var transform =
             Matrix4x4.CreateTranslation(-(nx-1)/2f, -(ny-1)/2f, -(nz-1)/2f) *
