@@ -29,6 +29,21 @@ public class IterativeClosestPoint
         staticTree = new KdTree (staticPoints);
     }
 
+    public IterativeClosestPoint (ReadOnlyMemory<Vector3>[] staticPoints)
+    {
+        var n = staticPoints.Length;
+        if (n == 0)
+            throw new ArgumentException ("At least one set of points must be given", nameof (staticPoints));
+        staticTree = new KdTree (staticPoints[0].Span);
+        for (int i = 1; i < n; i++)
+            staticTree.AddPoints (staticPoints[i].Span);
+    }
+
+    public void AddStaticPoints (ReadOnlySpan<Vector3> staticPoints)
+    {
+        staticTree.AddPoints (staticPoints);
+    }
+
     /// <summary>
     /// Rigidly move the given points to align with the static points
     /// used to construct this instance.
@@ -188,5 +203,22 @@ public class IterativeClosestPoint
             fpool.Return (distA);
         }
     }
+
+    public Matrix4x4[] GlobalRegisterPoints (ReadOnlyMemory<Vector3>[] staticPoints, Memory<Vector3>[] dynamicPoints)
+    {
+        var n = dynamicPoints.Length;
+        var icp = new IterativeClosestPoint (staticPoints);
+        var transforms = new Matrix4x4[n];
+        for (var i = 0; i < n; i++) {
+            var dpoints = dynamicPoints[i].Span;
+            transforms[i] = icp.RegisterPoints (dpoints);
+            var goodRegistration = true;
+            if (goodRegistration) {
+                icp.AddStaticPoints (dpoints);
+            }
+        }
+        return transforms;
+    }
+
 }
 
