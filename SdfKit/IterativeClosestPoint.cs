@@ -207,6 +207,9 @@ public class IterativeClosestPoint
     public Matrix4x4[] GlobalRegisterPoints (ReadOnlyMemory<Vector3>[] staticPoints, Memory<Vector3>[] dynamicPoints)
     {
         var n = dynamicPoints.Length;
+        if (n == 0) {
+            return Array.Empty<Matrix4x4> ();
+        }
         var icp = new IterativeClosestPoint (staticPoints);
         var transforms = new Matrix4x4[n];
         for (var i = 0; i < n; i++) {
@@ -218,6 +221,20 @@ public class IterativeClosestPoint
             }
         }
         return transforms;
+    }
+
+    public Matrix4x4[] GlobalRegisterPoints (Memory<Vector3>[] points)
+    {
+        var n = points.Length;
+        if (n == 0) {
+            return Array.Empty<Matrix4x4> ();
+        }
+        else if (n == 1) {
+            return new Matrix4x4[] { Matrix4x4.Identity };
+        }
+        var spoints = points.Take (1).Select(x => (ReadOnlyMemory<Vector3>)x).ToArray ();
+        var dpoints = points.Skip (1).ToArray ();
+        return GlobalRegisterPoints (spoints, dpoints);
     }
 
 }
