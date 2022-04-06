@@ -35,7 +35,7 @@ public class SdfTests
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             n, n, n);
-        Assert.AreEqual(1128, mesh.Vertices.Length);
+        Assert.AreEqual(1248, mesh.Vertices.Length);
     }
 
     [Test]
@@ -48,6 +48,6 @@ public class SdfTests
             new Vector3(-1, -1, -1),
             new Vector3(1, 1, 1),
             n, n, n);
-        Assert.AreEqual(1128, mesh.Vertices.Length);
+        Assert.AreEqual(1248, mesh.Vertices.Length);
     }
 }

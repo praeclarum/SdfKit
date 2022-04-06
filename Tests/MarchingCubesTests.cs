@@ -19,9 +19,9 @@ public class MarchingCubesTests
         Assert.AreEqual(5, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj("Sphere5.obj");
-        Assert.AreEqual(30, mesh.Vertices.Length);
+        Assert.AreEqual(54, mesh.Vertices.Length);
         Assert.AreEqual(mesh.Center.Length(), 0.0f, 1e-6f);
-        Assert.AreEqual(r, mesh.Size.X/2f, 1e-3f);
+        Assert.AreEqual(r, mesh.Size.X/2f, 0.3f);
     }
 
     [Test]
@@ -36,9 +36,9 @@ public class MarchingCubesTests
         Assert.AreEqual(10, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj("Sphere10.obj");
-        Assert.AreEqual(264, mesh.Vertices.Length);
+        Assert.AreEqual(312, mesh.Vertices.Length);
         Assert.AreEqual(mesh.Center.Length(), 0.0f, 1e-6f);
-        Assert.AreEqual(r, mesh.Size.X/2f, 1e-1f);
+        Assert.AreEqual(r, mesh.Size.X/2f, 0.2f);
     }
 
     [Test]
@@ -91,7 +91,7 @@ public class MarchingCubesTests
         mesh.WriteObj("Box10.obj");
         Assert.AreEqual(384, mesh.Vertices.Length);
         Assert.AreEqual(mesh.Center.Length(), 0.0f, 1e-6f);
-        Assert.AreEqual(r, mesh.Size.X/2f, 1e-1f);
+        Assert.AreEqual(r, mesh.Size.X/2f, 3e-1f);
     }
 
     [Test]
@@ -110,7 +110,7 @@ public class MarchingCubesTests
         Assert.AreEqual(n, volume.NX);
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj($"Cylinder{n}.obj");
-        Assert.AreEqual(7056, mesh.Vertices.Length);
+        Assert.AreEqual(7456, mesh.Vertices.Length);
         Assert.AreEqual(0.0f, mesh.Center.X, 1e-6f);
         Assert.AreEqual(0.0f, mesh.Center.Y, 1e-6f);
         Assert.AreEqual(0.0f, mesh.Center.Z, 1e-6f);
@@ -143,10 +143,10 @@ public class MarchingCubesTests
         });
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1, progress);
         mesh.WriteObj("Sphere128.obj");
-        Assert.AreEqual(71016, mesh.Vertices.Length);
+        Assert.AreEqual(72240, mesh.Vertices.Length);
         Assert.IsTrue(gotZero);
         Assert.IsTrue(gotOne);
         Assert.AreEqual(mesh.Center.Length(), 0.0f, 1e-6f);
-        Assert.AreEqual(r, mesh.Size.X/2f, 1e-3f);
+        Assert.AreEqual(r, mesh.Size.X/2f, 0.1f);
     }
 }

@@ -58,25 +58,6 @@ public class VolumeTests
     }
 
     [Test]
-    public void TwoHasMinMax()
-    {
-        var sdf = (Vector3 p) => {
-            Assert.AreEqual(1.0f, Math.Abs(p.X), 0.001f);
-            Assert.AreEqual(1.0f, Math.Abs(p.Y), 0.001f);
-            Assert.AreEqual(1.0f, Math.Abs(p.Z), 0.001f);
-            return Vector4.One;
-        };
-        var v = Voxels.SampleSdf(
-            sdf,
-            new Vector3(-1, -1, -1),
-            new Vector3(1, 1, 1),
-            2, 2, 2);
-        Assert.AreEqual(2, v.NX);
-        Assert.AreEqual(2, v.NY);
-        Assert.AreEqual(2, v.NZ);
-    }
-
-    [Test]
     public void ThreeHasCenter()
     {
         var hasCenter = false;

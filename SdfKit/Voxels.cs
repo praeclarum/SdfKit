@@ -49,6 +49,7 @@ public class Voxels : IBoundedVolume
         var max = Max;
         MeasureSamplingVolume(min, max, ref nx, ref ny, ref nz, out var newMin, out var dx, out var dy, out var dz);
         min = newMin;
+        min += new Vector3(0.5f*dx, 0.5f*dy, 0.5f*dz);
         var ntotal = nx * ny * nz;
         var numBatches = (ntotal + batchSize - 1) / batchSize;
         
@@ -165,23 +166,8 @@ public class Voxels : IBoundedVolume
     static void MeasureSamplingVolume(Vector3 min, Vector3 max, ref int nx, ref int ny, ref int nz, out Vector3 newMin, out float dx, out float dy, out float dz)
     {
         newMin = min;
-        dx = nx > 1 ? (max.X - min.X) / (nx - 1) : 0.0f;
-        dy = ny > 1 ? (max.Y - min.Y) / (ny - 1) : 0.0f;
-        dz = nz > 1 ? (max.Z - min.Z) / (nz - 1) : 0.0f;
-        if (nx <= 1)
-        {
-            newMin.X = (min.X + max.X) / 2.0f;
-            nx = 1;
-        }
-        if (ny <= 1)
-        {
-            newMin.Y = (min.Y + max.Y) / 2.0f;
-            ny = 1;
-        }
-        if (nz <= 1)
-        {
-            newMin.Z = (min.Z + max.Z) / 2.0f;
-            nz = 1;
-        }
+        dx = nx >= 1 ? (max.X - min.X) / (nx) : 0.0f;
+        dy = ny >= 1 ? (max.Y - min.Y) / (ny) : 0.0f;
+        dz = nz >= 1 ? (max.Z - min.Z) / (nz) : 0.0f;
     }
 }
