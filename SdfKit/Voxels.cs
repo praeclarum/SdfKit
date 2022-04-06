@@ -6,9 +6,12 @@ namespace SdfKit;
 public class Voxels : IBoundedVolume
 {
     public readonly float[,,] Values;
-    public int NX => Values.GetLength(0);
-    public int NY => Values.GetLength(1);
-    public int NZ => Values.GetLength(2);
+    public readonly int NX;
+    public readonly int NY;
+    public readonly int NZ;
+    public readonly float DX;
+    public readonly float DY;
+    public readonly float DZ;
 
     public Vector3 Min { get; private set; }
     public Vector3 Max { get; private set; }
@@ -21,17 +24,42 @@ public class Voxels : IBoundedVolume
         Values = values;
         Min = min;
         Max = max;
+        NX = values.GetLength(0);
+        NY = values.GetLength(1);
+        NZ = values.GetLength(2);
+        DX = NX >= 1 ? (max.X - min.X) / NX : 0.0f;
+        DY = NY >= 1 ? (max.Y - min.Y) / NY : 0.0f;
+        DZ = NZ >= 1 ? (max.Z - min.Z) / NZ : 0.0f;
     }
 
     public Voxels(Vector3 min, Vector3 max, int nx, int ny, int nz)
-        : this(CreateSamplingVolume(min, max, ref nx, ref ny, ref nz, out var newMin, out var dx, out var dy, out var dz), min, max)
+        : this(new float[nx, ny, nz], min, max)
     {
     }
 
-    public float this[int x, int y, int z]
+    public float this[int ix, int iy, int iz]
     {
-        get => Values[x, y, z];
-        set => Values[x, y, z] = value;
+        get => Values[ix, iy, iz];
+        set => Values[ix, iy, iz] = value;
+    }
+
+    public float this[Vector3 p]
+    {
+        get
+        {
+            var ix = (int)((p.X - Min.X) / DX);
+            var iy = (int)((p.Y - Min.Y) / DY);
+            var iz = (int)((p.Z - Min.Z) / DZ);
+            return Values[ix, iy, iz];
+        }
+
+        set
+        {
+            var ix = (int)((p.X - Min.X) / DX);
+            var iy = (int)((p.Y - Min.Y) / DY);
+            var iz = (int)((p.Z - Min.Z) / DZ);
+            Values[ix, iy, iz] = value;
+        }
     }
 
     public Mesh ToMesh(float isoValue = 0.0f, int step = 1, IProgress<float>? progress = null)
@@ -47,9 +75,7 @@ public class Voxels : IBoundedVolume
         var nz = NZ;
         var min = Min;
         var max = Max;
-        MeasureSamplingVolume(min, max, ref nx, ref ny, ref nz, out var newMin, out var dx, out var dy, out var dz);
-        min = newMin;
-        min += new Vector3(0.5f*dx, 0.5f*dy, 0.5f*dz);
+        min += new Vector3(0.5f*DX, 0.5f*DY, 0.5f*DZ);
         var ntotal = nx * ny * nz;
         var numBatches = (ntotal + batchSize - 1) / batchSize;
         
@@ -72,9 +98,9 @@ public class Voxels : IBoundedVolume
                 var ix = i % nx;
                 var iy = (i / nx) % ny;
                 var iz = i / (nx * ny);
-                p.X = min.X + ix * dx;
-                p.Y = min.Y + iy * dy;
-                p.Z = min.Z + iz * dz;
+                p.X = min.X + ix * DX;
+                p.Y = min.Y + iy * DY;
+                p.Z = min.Z + iz * DZ;
                 positions[i - startI] = p;
             }
             var pmem = positions.AsMemory().Slice(0, endI - startI);
@@ -155,19 +181,5 @@ public class Voxels : IBoundedVolume
             }
         };
         return SampleSdf(batchedSdf, min, max, nx, ny, nz, batchSize, maxDegreeOfParallelism);
-    }
-
-    static float[,,] CreateSamplingVolume(Vector3 min, Vector3 max, ref int nx, ref int ny, ref int nz, out Vector3 newMin, out float dx, out float dy, out float dz)
-    {
-        MeasureSamplingVolume(min, max, ref nx, ref ny, ref nz, out newMin, out dx, out dy, out dz);
-        return new float[nx, ny, nz];
-    }
-
-    static void MeasureSamplingVolume(Vector3 min, Vector3 max, ref int nx, ref int ny, ref int nz, out Vector3 newMin, out float dx, out float dy, out float dz)
-    {
-        newMin = min;
-        dx = nx >= 1 ? (max.X - min.X) / (nx) : 0.0f;
-        dy = ny >= 1 ? (max.Y - min.Y) / (ny) : 0.0f;
-        dz = nz >= 1 ? (max.Z - min.Z) / (nz) : 0.0f;
     }
 }
