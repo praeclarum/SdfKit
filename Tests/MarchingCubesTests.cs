@@ -8,6 +8,24 @@ public class MarchingCubesTests
     }
 
     [Test]
+    public void ColoredSpheres()
+    {
+        var r = 1f;
+        var sdf = 
+            SdfFuncs.Union(
+                SdfFuncs.Sphere(r*0.4f).WithColor(1.0f, 0.2f, 0.3f).Translate(-1, 0, 0),
+                SdfFuncs.Sphere(r*0.2f).WithColor(0.1f, 1.0f, 0.3f).Translate(1, 0, 0));
+        var volume = Voxels.SampleSdf(
+            sdf.ToSdf (),
+            -3f * Vector3.One,
+            3f * Vector3.One,
+            32, 32, 32);
+        var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
+        mesh.WriteObj("ColoredSpheres.obj");
+        Assert.AreEqual(104, mesh.Vertices.Length);
+    }
+
+    [Test]
     public void Sphere5()
     {
         var r = 1f;

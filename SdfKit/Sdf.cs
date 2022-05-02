@@ -97,6 +97,22 @@ public static class SdfEx
             depthIterations,
             batchSize, maxDegreeOfParallelism);
     }
+
+    public static Sdf WithColor(this Sdf sdf, Vector3 color)
+    {
+        return (points, colorsAndDistances) => {
+            sdf(points, colorsAndDistances);
+            var colors = colorsAndDistances.Span;
+            for (int i = 0; i < colors.Length; i++) {
+                colors[i] = new Vector4(color, colors[i].W);
+            }
+        };
+    }
+
+    public static Sdf WithColor(this Sdf sdf, float red, float green, float blue)
+    {
+        return sdf.WithColor(new Vector3(red, green, blue));
+    }
 }
 
 public static class Sdfs
@@ -294,6 +310,33 @@ public static class SdfFuncEx
                 d[i] = sdf(p[i]);
             }
         };
+    }
+
+    public static SdfFunc Translate(this SdfFunc sdf, Vector3 offset)
+    {
+        return (p) =>
+        {
+            return sdf(p - offset);
+        };
+    }
+
+    public static SdfFunc Translate(this SdfFunc sdf, float x, float y, float z)
+    {
+        return sdf.Translate(new Vector3(x, y, z));
+    }
+
+    public static SdfFunc WithColor(this SdfFunc sdf, Vector3 color)
+    {
+        return (p) =>
+        {
+            var d = sdf(p);
+            return new Vector4(color, d.W);
+        };
+    }
+
+    public static SdfFunc WithColor(this SdfFunc sdf, float red, float green, float blue)
+    {
+        return sdf.WithColor(new Vector3(red, green, blue));
     }
 }
 
