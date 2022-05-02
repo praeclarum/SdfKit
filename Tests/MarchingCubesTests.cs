@@ -23,6 +23,8 @@ public class MarchingCubesTests
         var mesh = MarchingCubes.CreateMesh(volume, 0.0f, 1);
         mesh.WriteObj("ColoredSpheres.obj");
         Assert.AreEqual(104, mesh.Vertices.Length);
+        Assert.AreEqual(104, mesh.Colors.Length);
+        Assert.IsTrue(mesh.Colors[0].X > 0.5f);
     }
 
     [Test]

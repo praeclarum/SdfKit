@@ -8,6 +8,7 @@ using System.IO;
 public class Mesh : IBoundedVolume
 {
     public Vector3[] Vertices { get; }
+    public Vector3[] Colors { get; }
     public Vector3[] Normals { get; }
     public int[] Triangles { get; }
 
@@ -17,9 +18,10 @@ public class Mesh : IBoundedVolume
     public Vector3 Size => Max - Min;
     public float Radius => (Max - Min).Length() * 0.5f;
 
-    public Mesh(Vector3[] vertices, Vector3[] normals, int[] triangles)
+    public Mesh(Vector3[] vertices, Vector3[] colors, Vector3[] normals, int[] triangles)
     {
         Vertices = vertices;
+        Colors = colors;
         Normals = normals;
         Triangles = triangles;
         Measure();

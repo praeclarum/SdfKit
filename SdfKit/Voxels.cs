@@ -6,6 +6,7 @@ namespace SdfKit;
 public class Voxels : IBoundedVolume
 {
     public readonly float[,,] Values;
+    public readonly Vector3[,,] Colors;
     public readonly int NX;
     public readonly int NY;
     public readonly int NZ;
@@ -19,9 +20,10 @@ public class Voxels : IBoundedVolume
     public Vector3 Size => Max - Min;
     public float Radius => (Max - Min).Length() * 0.5f;
 
-    public Voxels(float[,,] values, Vector3 min, Vector3 max)
+    public Voxels(float[,,] values, Vector3[,,] colors, Vector3 min, Vector3 max)
     {
         Values = values;
+        Colors = colors;
         Min = min;
         Max = max;
         NX = values.GetLength(0);
@@ -33,7 +35,7 @@ public class Voxels : IBoundedVolume
     }
 
     public Voxels(Vector3 min, Vector3 max, int nx, int ny, int nz)
-        : this(new float[nx, ny, nz], min, max)
+        : this(new float[nx, ny, nz], new Vector3[nx, ny, nz], min, max)
     {
     }
 
@@ -70,6 +72,7 @@ public class Voxels : IBoundedVolume
     public void SampleSdf(Sdf sdf, int batchSize =SdfConfig.DefaultBatchSize, int maxDegreeOfParallelism = -1)
     {
         var voxels = Values;
+        var colors = Colors;
         var nx = NX;
         var ny = NY;
         var nz = NZ;
@@ -111,7 +114,9 @@ public class Voxels : IBoundedVolume
                 var ix = i % nx;
                 var iy = (i / nx) % ny;
                 var iz = i / (nx * ny);
-                voxels[ix, iy, iz] = values[i - startI].W;
+                var v = values[i - startI];
+                voxels[ix, iy, iz] = v.W;
+                colors[ix, iy, iz] = new Vector3(v.X, v.Y, v.Z);
             }
             return pvs;
         }, x => {

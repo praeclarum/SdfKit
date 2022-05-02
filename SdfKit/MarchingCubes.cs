@@ -42,6 +42,7 @@ public static class MarchingCubes
         int ny = volume.NY;
         int nz = volume.NZ;
         var values = volume.Values;
+        var colors = volume.Colors;
 
         var cell = new Cell(nx, ny, nz);
 
@@ -67,7 +68,9 @@ public static class MarchingCubes
                     var x_st = x + step;
                     cell.SetCube(isoValue, x, y, z, step,
                         values[x, y, z   ], values[x_st, y, z   ], values[x_st, y_st, z   ], values[x, y_st, z   ],
-                        values[x, y, z_st], values[x_st, y, z_st], values[x_st, y_st, z_st], values[x, y_st, z_st]);
+                        values[x, y, z_st], values[x_st, y, z_st], values[x_st, y_st, z_st], values[x, y_st, z_st],
+                        colors[x, y, z   ], colors[x_st, y, z   ], colors[x_st, y_st, z   ], colors[x, y_st, z   ],
+                        colors[x, y, z_st], colors[x_st, y, z_st], colors[x_st, y_st, z_st], colors[x, y_st, z_st]);
                     var cas = Luts.cases[cell.Index,  0];
                     if (cas > 0) {
                         var config = Luts.cases[cell.Index,  1];
@@ -78,7 +81,7 @@ public static class MarchingCubes
             progress?.Report((float)z / nz_bound);
         }
 
-        var mesh = new Mesh (cell.Vertices, cell.NegativeNormals, cell.Faces);
+        var mesh = new Mesh (cell.Vertices, cell.Colors, cell.NegativeNormals, cell.Faces);
         var size = volume.Size;
         var transform =
             Matrix4x4.CreateTranslation(-(nx-1)/2f, -(ny-1)/2f, -(nz-1)/2f) *

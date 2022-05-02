@@ -63,6 +63,7 @@ class Cell
     const double FLT_EPSILON = 0.0000001;
 
     readonly List<Vector3> vertices = new(8);
+    readonly List<Vector3> colors = new(8);
     readonly List<Vector3> normals = new(8);
     readonly List<double> values = new(8);
     readonly List<int> faces = new(8);
@@ -71,13 +72,18 @@ class Cell
     /// Values of cube corners (isovalue subtracted)
     /// </summary>
     public double v0, v1, v2, v3, v4, v5, v6, v7;
+    /// <summary>
+    /// Colors of cube corners (RGB)
+    /// </summary>
+    Vector3 c0, c1, c2, c3, c4, c5, c6, c7;
 
     readonly double[] vv = new double[8];
+    readonly Vector3[] cc = new Vector3[8];
     readonly double[] vg = new double[8 * 3];
 
     bool v12Calculated;
     double v12_xg, v12_yg, v12_zg;
-    float v12_x, v12_y, v12_z;
+    float v12_x, v12_y, v12_z, v12_r, v12_g, v12_b;
 
     /// <summary>
     /// Max value of the eight corners
@@ -87,6 +93,7 @@ class Cell
     int VertexCount => vertices.Count;
 
     public Vector3[] Vertices => vertices.ToArray();
+    public Vector3[] Colors => colors.ToArray();
     public Vector3[] NegativeNormals
     {
         get
@@ -135,9 +142,10 @@ class Cell
         faceLayer = faceLayer1;
     }
 
-    int AddVertex(float x, float y, float z)
+    int AddVertex(float x, float y, float z, float r, float g, float b)
     {
         vertices.Add(new Vector3(x, y, z));
+        colors.Add(new Vector3(r, g, b));
         normals.Add(Vector3.Zero);
         values.Add(0.0);
         return VertexCount - 1;
@@ -182,7 +190,8 @@ class Cell
     /// </summary>
     public void SetCube(double isovalue,
                         int x, int y, int z, int step,
-                        double v0, double v1, double v2, double v3, double v4, double v5, double v6, double v7)
+                        double v0, double v1, double v2, double v3, double v4, double v5, double v6, double v7,
+                        Vector3 c0, Vector3 c1, Vector3 c2, Vector3 c3, Vector3 c4, Vector3 c5, Vector3 c6, Vector3 c7)
     {
         this.x = x;
         this.y = y;
@@ -197,6 +206,15 @@ class Cell
         this.v5 = v5 - isovalue;
         this.v6 = v6 - isovalue;
         this.v7 = v7 - isovalue;
+
+        this.c0 = c0;
+        this.c1 = c1;
+        this.c2 = c2;
+        this.c3 = c3;
+        this.c4 = c4;
+        this.c5 = c5;
+        this.c6 = c6;
+        this.c7 = c7;
 
         // Calculate index
         int index = 0;
@@ -282,7 +300,7 @@ class Cell
             else
             {
                 // Add precalculated center vertex position (is interpolated)
-                indexInVertexArray = AddVertex(v12_x, v12_y, v12_z);
+                indexInVertexArray = AddVertex(v12_x, v12_y, v12_z, v12_r, v12_g, v12_b);
                 // Update face layer
                 faceLayer[indexInFaceLayer] = indexInVertexArray;
                 // Add face and gradient
@@ -302,6 +320,8 @@ class Cell
             // Define strength of both corners
             tmpf1 = 1.0 / (FLT_EPSILON + Math.Abs(vv[index1]));
             tmpf2 = 1.0 / (FLT_EPSILON + Math.Abs(vv[index2]));
+            var color1 = cc[index1];
+            var color2 = cc[index2];
 
             // print('indexInVertexArray', x, y, z, '-', vi, indexInVertexArray, indexInFaceLayer)
 
@@ -318,12 +338,16 @@ class Cell
                 (fx, fy, fz, ff) = (0.0, 0.0, 0.0, 0.0);
                 fx += dx1 * tmpf1; fy += dy1 * tmpf1; fz += dz1 * tmpf1; ff += tmpf1;
                 fx += dx2 * tmpf2; fy += dy2 * tmpf2; fz += dz2 * tmpf2; ff += tmpf2;
+                var color = color1*(float)tmpf1 + color2*(float)tmpf2;
 
                 // Add vertex
                 indexInVertexArray = AddVertex(
                                 (float)(x + stp * fx / ff),
                                 (float)(y + stp * fy / ff),
-                                (float)(z + stp * fz / ff));
+                                (float)(z + stp * fz / ff),
+                                (float)(color.X / ff),
+                                (float)(color.Y / ff),
+                                (float)(color.Z / ff));
                 // Update face layer
                 faceLayer[indexInFaceLayer] = indexInVertexArray;
                 // Add face and gradient
@@ -435,6 +459,15 @@ class Cell
         this.vv[6] = this.v7;//
         this.vv[7] = this.v6;//
 
+        this.cc[0] = this.c0;
+        this.cc[1] = this.c1;
+        this.cc[2] = this.c3;//
+        this.cc[3] = this.c2;//
+        this.cc[4] = this.c4;
+        this.cc[5] = this.c5;
+        this.cc[6] = this.c7;//
+        this.cc[7] = this.c6;//
+
         // Calculate max
         double vmin = 0.0, vmax = 0.0;
         for (i = 0; i < 8; i++)
@@ -490,11 +523,16 @@ class Cell
         fx += 1.0 * v6; fy += 1.0 * v6; fz += 1.0 * v6; ff += v6;
         fx += 0.0 * v7; fy += 1.0 * v7; fz += 1.0 * v7; ff += v7;
 
+        var fc = c0*(float)v0 + c1*(float)v1 + c2*(float)v2 + c3*(float)v3 + c4*(float)v4 + c5*(float)v5 + c6*(float)v6 + c7*(float)v7;
+
         // Store
         double stp = (double)this.step;
         this.v12_x = (float)(this.x + stp * fx / ff);
         this.v12_y = (float)(this.y + stp * fy / ff);
         this.v12_z = (float)(this.z + stp * fz / ff);
+        this.v12_r = (float)(fc.X / ff);
+        this.v12_g = (float)(fc.Y / ff);
+        this.v12_b = (float)(fc.Z / ff);
 
         // Also pre-calculate gradient of center
         // note that prepare_for_adding_triangles() must have been called for
